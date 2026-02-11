@@ -37,6 +37,22 @@ class Player:
     def draw(self):
         pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
 
+class Scene:
+    def __init__(self):
+        pass
+    def update(self):
+        pass
+    def draw(self):
+        pass
+    
+class MenuScene(Scene):
+    def __init__(self):
+        super().__init__()
+    def update(self):
+        self.draw()
+    def draw(self):
+        pass
+
 #idea for overarching Game class takes inspiration from Nick Yoder's DoomClone
 class Game:
     def __init__(self):
