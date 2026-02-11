@@ -1,9 +1,11 @@
 import math
 import pygame
+#Basic game loop template used from pygame documentation: https://www.pygame.org
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("First Game Window")
+pygame.display.set_caption("Bullet Hell")
+
 
 running = True
 clock = pygame.time.Clock()
@@ -14,9 +16,13 @@ class Player:
         self.xpos = xpos
         self.ypos = ypos
         self.speed = 100
-    def move(self, dt, keysPressed):
+    def update(self):
+        self.move()
+        self.draw()
+    def move(self):
         x=0
         y=0
+        keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_w]:
             y-=1
         if keysPressed[pygame.K_s]:
@@ -32,7 +38,7 @@ class Player:
             y /= length
             self.xpos += x*self.speed*dt
             self.ypos += y*self.speed*dt
-    def draw(self, screen):
+    def draw(self):
         pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
         
 
@@ -44,16 +50,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     screen.fill("black")
-    keysPressed = pygame.key.get_pressed()
-    if keysPressed[pygame.K_w]:
-        player.move(dt, keysPressed)
-    if keysPressed[pygame.K_s]:
-        player.move(dt, keysPressed)
-    if keysPressed[pygame.K_a]:
-        player.move(dt, keysPressed)
-    if keysPressed[pygame.K_d]:
-        player.move(dt, keysPressed)
-    player.draw(screen)
+    player.update()
     pygame.display.flip()
     dt = clock.tick(60) / 1000 
 pygame.quit()
