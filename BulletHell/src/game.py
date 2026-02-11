@@ -4,10 +4,6 @@ import pygame
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("Bullet Hell")
-
-
-running = True
 clock = pygame.time.Clock()
 dt = 0
 
@@ -40,17 +36,28 @@ class Player:
             self.ypos += y*self.speed*dt
     def draw(self):
         pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
+
+#idea for overarching Game class takes inspiration from Nick Yoder's DoomClone
+class Game:
+    def __init__(self):
+        self.player = Player(400,300)
+    def update(self):
+        screen.fill("black")
+        self.player.update()
+        global dt
+        dt = clock.tick(60) / 1000   
+        pygame.display.flip()
+    def run(self):
+        pygame.display.set_caption("Bullet Hell")
+        while True:
+            self.checkEvents()
+            self.update()
+    def checkEvents(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
         
 
 if __name__ == "__main__":
-    player = Player(400,300)
-while running:
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    screen.fill("black")
-    player.update()
-    pygame.display.flip()
-    dt = clock.tick(60) / 1000 
-pygame.quit()
+    game = Game()
+    game.run()
