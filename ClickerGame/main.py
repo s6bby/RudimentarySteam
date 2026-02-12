@@ -362,7 +362,7 @@ class Game:
         self.coins = 0
         self.explosion_bought = False
 
-        self.explosion_sound = pygame.mixer.Sound("Assets/explosion.wav")
+        self.explosion_sound = pygame.mixer.Sound("assets/explosion.wav")
         self.explosion_sound.set_volume(0.4)
 
         self.current_scene = MenuScene(self)
