@@ -18,6 +18,37 @@ colors = {
     "lightgray": (200, 200, 200)
 }
 
+class Explosion:
+    def __init__(self, pos):
+        self.pos = pygame.Vector2(pos)
+        self.radius = 5
+        self.max_radius = 60
+        self.growth_speed = 300
+        self.alpha = 255
+
+    def update(self, dt):
+        self.radius += self.growth_speed * dt
+        self.alpha -= 400 * dt
+        if self.alpha < 0:
+            self.alpha = 0
+
+    def draw(self, screen):
+        if self.alpha <= 0:
+            return
+
+        surface = pygame.Surface((150, 150), pygame.SRCALPHA)
+        pygame.draw.circle(
+            surface,
+            (255, 200, 50, int(self.alpha)),
+            (75, 75),
+            int(self.radius)
+        )
+        screen.blit(surface, (self.pos.x - 75, self.pos.y - 75))
+
+    def finished(self):
+        return self.alpha <= 0 or self.radius >= self.max_radius
+
+
 class Button:
     def __init__(self, rect, text, font, color, hover_color, text_color=colors["black"]):
         self.rect = pygame.Rect(rect)
@@ -41,6 +72,7 @@ class Button:
             self.rect.collidepoint(event.pos)
         )
 
+
 class Scene:
     def __init__(self, game):
         self.game = game
@@ -53,6 +85,7 @@ class Scene:
 
     def draw(self, screen):
         pass
+
 
 class MenuScene(Scene):
     def __init__(self, game):
@@ -111,6 +144,7 @@ class MenuScene(Scene):
         for button in self.buttons:
             button.draw(screen)
 
+
 class GameScene(Scene):
     def __init__(self, game):
         super().__init__(game)
@@ -151,6 +185,7 @@ class GameScene(Scene):
         self.message = "Click the squares!"
         self.message_timer = 0
         self.click_count = 0
+        self.explosions = []
 
     def handle_event(self, event):
         if self.back_button.is_clicked(event):
@@ -168,6 +203,10 @@ class GameScene(Scene):
                 self.message_timer = 0.75
                 self.click_count += 1
                 self.game.coins += 2
+
+                if self.game.explosion_bought:
+                    self.explosions.append(Explosion(event.pos))
+                    self.game.explosion_sound.play()
 
     def update(self, dt):
         screen_width = self.game.screen.get_width()
@@ -194,6 +233,11 @@ class GameScene(Scene):
                     if target["color"] == colors["green"]:
                         target["color"] = target["original_color"]
 
+        for explosion in self.explosions[:]:
+            explosion.update(dt)
+            if explosion.finished():
+                self.explosions.remove(explosion)
+
     def draw(self, screen):
         screen.fill(colors["black"])
         self.back_button.draw(screen)
@@ -204,6 +248,9 @@ class GameScene(Scene):
         for target in self.targets:
             pygame.draw.rect(screen, target["color"], target["rect"])
 
+        for explosion in self.explosions:
+            explosion.draw(screen)
+
         if self.message:
             text_surface = self.font.render(self.message, True, colors["white"])
             text_rect = text_surface.get_rect(center=(screen.get_width() // 2, int(screen.get_height() * 0.75)))
@@ -213,6 +260,7 @@ class GameScene(Scene):
                     (screen.get_width() * 0.01, screen.get_height() * 0.08))
         screen.blit(self.font.render(f"Coins: {self.game.coins}", True, colors["yellow"]),
                     (screen.get_width() * 0.01, screen.get_height() * 0.15))
+
 
 class ShopScene(Scene):
     def __init__(self, game):
@@ -228,7 +276,6 @@ class ShopScene(Scene):
 
         self.button_padding_x = 20
         self.button_padding_y = 10
-        self.spacing = screen_height * 0.03
 
         self.back_button = self.create_button("Back", screen_width * 0.05, screen_height * 0.05)
 
@@ -257,13 +304,6 @@ class ShopScene(Scene):
                 self.game.coins -= 20
                 self.game.explosion_bought = True
                 self.explosion_button.text = "Explosions (Bought)"
-                text_surface = self.font.render(self.explosion_button.text, True, colors["black"])
-                w, h = text_surface.get_size()
-                self.explosion_button.rect.size = (w + self.button_padding_x * 2, h + self.button_padding_y * 2)
-                self.explosion_button.rect.center = (
-                    self.game.screen.get_width() // 2,
-                    self.game.screen.get_height() // 2
-                )
 
     def draw(self, screen):
         screen.fill(colors["shoppurple"])
@@ -272,6 +312,7 @@ class ShopScene(Scene):
             button.draw(screen)
         screen.blit(self.font.render(f"Coins: {self.game.coins}", True, colors["yellow"]),
                     (screen.get_width() * 0.01, screen.get_height() * 0.15))
+
 
 class LevelCompletionScene(Scene):
     def __init__(self, game):
@@ -306,16 +347,25 @@ class LevelCompletionScene(Scene):
         screen.blit(self.title_text, self.title_rect)
         self.back_button.draw(screen)
 
+
 class Game:
     def __init__(self, width=1920, height=1080):
         pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.set_num_channels(16)
+
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Click Game")
         self.clock = pygame.time.Clock()
         self.running = True
-        self.current_scene = MenuScene(self)
+
         self.coins = 0
         self.explosion_bought = False
+
+        self.explosion_sound = pygame.mixer.Sound("Assets/explosion.wav")
+        self.explosion_sound.set_volume(0.4)
+
+        self.current_scene = MenuScene(self)
 
     def change_scene(self, scene):
         self.current_scene = scene
@@ -331,6 +381,7 @@ class Game:
             self.current_scene.draw(self.screen)
             pygame.display.flip()
         pygame.quit()
+
 
 if __name__ == "__main__":
     Game().run()
