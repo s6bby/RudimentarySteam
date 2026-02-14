@@ -1,4 +1,4 @@
 bin/*
 *.o
 .vscode/*
-.venv
+.venv-files | grep node_modules
