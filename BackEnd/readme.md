@@ -6,7 +6,7 @@ Install typescript with `npm install -g typescript`
 
 In the `./BackEnd` directory `npm install express`
 
-## Run Commands (On Windows may differ on your OS)
+## Run Commands On Windows
 
 `npx ts-node client.ts`
 
