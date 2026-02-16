@@ -2,11 +2,6 @@ import math
 import pygame
 #Basic game loop template used from pygame documentation: https://www.pygame.org
 
-pygame.init()
-screen = pygame.display.set_mode((800, 600))
-clock = pygame.time.Clock()
-dt = 0
-
 class Player:
     def __init__(self,xpos,ypos):
         self.xpos = xpos
@@ -45,21 +40,34 @@ class Scene:
     def draw(self):
         pass
     
-class MenuScene(Scene):
+class MainMenu(Scene):
     def __init__(self):
         super().__init__()
     def update(self):
         self.draw()
+        keysPressed = pygame.key.get_pressed()
+        if keysPressed[pygame.K_SPACE]:
+            game.currentScene = PlayScene()
     def draw(self):
-        pass
+        screen.fill("black")
+        font = pygame.font.SysFont(None, 48)
+        text = font.render("Press Space to Start", True, "white")
+        screen.blit(text, (200, 250))
 
-#idea for overarching Game class takes inspiration from Nick Yoder's DoomClone
-class Game:
+class PlayScene(Scene):
     def __init__(self):
+        super().__init__()
         self.player = Player(400,300)
     def update(self):
         screen.fill("black")
         self.player.update()
+
+#idea for overarching Game class takes inspiration from Nick Yoder's DoomClone
+class Game:
+    def __init__(self):
+        self.currentScene = MainMenu()
+    def update(self):
+        self.currentScene.update()
         global dt
         dt = clock.tick(60) / 1000   
         pygame.display.flip()
@@ -75,5 +83,9 @@ class Game:
         
 
 if __name__ == "__main__":
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)  #TODO: Window resizing needs to be accounted for in the way the game is drawn
+    clock = pygame.time.Clock()
+    dt = 0
     game = Game()
     game.run()
