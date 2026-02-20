@@ -2,14 +2,15 @@ import * as WriteUtils from './json-manipulation';
 
 class Library
 {
-    applications: Application[];
+    private applications: Application[];
+    static applications: any;
     
-    constructor(applications: Application[] = [])
+    constructor()
     {
-        this.applications = applications;
+        this.applications = [];
     }
 
-    public static async loadFromFile(filePath: string = '../data/data.json'): Promise<Library>
+    public async loadFromFile(filePath: string = '../data/data.json'): Promise<void>
     {
         const data = await WriteUtils.loadFromJsonFile(filePath);
         if (data) {
@@ -21,9 +22,8 @@ class Library
                 appData.upvotes,
                 appData.reviews
             ));
-            return new Library(applications);
+            this.applications = applications;
         }
-        return new Library();
     }
 
     async writeToFile(filePath: string = '../data/data.json'): Promise<void>
@@ -31,8 +31,9 @@ class Library
         await WriteUtils.saveToJsonFile(this, filePath);
     }
 
-    addApplication(application: Application): void
+    addApplication(id: number, name: string, description: string): void
     {
+        const application = new Application(id, name, description);
         if (this.applications.some(app => app.applicationId === application.applicationId))
         {
             console.error(`Application with ID ${application.applicationId} already exists.`);
@@ -41,14 +42,19 @@ class Library
         this.applications.push(application);
     }
 
+    removeApplication(applicationId: number): void
+    {
+        this.applications = this.applications.filter(app => app.applicationId !== applicationId);
+    }
+
     getApplicationById(applicationId: number): Application | undefined
     {
         return this.applications.find(app => app.applicationId === applicationId);
     }
 
-    removeApplication(applicationId: number): void
+    getAllApplications(): Application[]
     {
-        this.applications = this.applications.filter(app => app.applicationId !== applicationId);
+        return this.applications;
     }
 }
 
@@ -59,9 +65,9 @@ class Application
     description: string;
     downloads: number;
     upvotes: number;
-    reviews: string[];
+    reviews: Review[];
     
-    constructor(applicationId: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: string[] = [])
+    constructor(applicationId: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: Review[] = [])
     {
         this.applicationId = applicationId;
         this.name = name;
@@ -71,9 +77,9 @@ class Application
         this.reviews = reviews;
     }
 
-    addReview(review: string): void
+    addReview(review: string, user: User): void
     {
-        this.reviews.push(review);
+        this.reviews.push(new Review(user, review));
     }
 
     upvote(): void
@@ -82,15 +88,43 @@ class Application
     }
 }
 
+class Review
+{
+    User: User; 
+    comment: string;
+
+    constructor(user: User, comment: string)
+    {
+        this.User = user;
+        this.comment = comment;
+    }
+}
+
+class User
+{
+    userId: number;
+    username: string;
+    email: string;
+
+    constructor(userId: number, username: string, email: string)
+    {
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+    }
+}
+
 // Test data loading data and adding some applications
+const library = new Library();
+
 (async () => {
-    const library = await Library.loadFromFile();
-    library.addApplication(new Application(1, 'App One', 'Description for App One'));
-    library.addApplication(new Application(2, 'App Two', 'Description for App Two'));
+    await library.loadFromFile();
+    library.addApplication(1, 'App One', 'Description for App One');
+    library.addApplication(2, 'App Two', 'Description for App Two');
     await library.writeToFile();
     console.log(library);
-    library.addApplication(new Application(3, 'App Three', 'Description for App Three'));
-    library.addApplication(new Application(4, 'App Four', 'Description for App Four'));
+    library.addApplication(3, 'App Three', 'Description for App Three');
+    library.addApplication(4, 'App Four', 'Description for App Four');
     await library.writeToFile();
     console.log(library);
     library.removeApplication(3);
