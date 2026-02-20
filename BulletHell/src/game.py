@@ -7,6 +7,7 @@ class Player:
         self.xpos = xpos
         self.ypos = ypos
         self.speed = 100
+        self.health = 100
     def update(self):
         self.move()
         self.draw()
@@ -31,6 +32,71 @@ class Player:
             self.ypos += y*self.speed*dt
     def draw(self):
         pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
+
+class Enemy:
+    def __init__(self, xpos, ypos):
+        self.xpos = xpos
+        self.ypos = ypos
+    def update(self, targetX, targetY):
+        pass
+    def draw(self):
+        pass
+    def path(self, targetX, targetY):
+        pass
+
+class Glob(Enemy):
+    def __init__(self, xpos, ypos):
+        super().__init__(xpos, ypos)
+        self.speed = 30
+        self.bullets = []
+        self.shootTimer = 0
+    def update(self, targetX, targetY):
+        self.path(targetX, targetY)
+        self.draw()
+        self.shootTimer += dt
+        if self.shootTimer >= 1:
+            self.shootTimer = 0
+            self.bullets.append(self.shoot(targetX, targetY))
+        for bullet in self.bullets[:]:
+            if not bullet.update():
+                self.bullets.remove(bullet)
+            else:
+                bullet.draw()
+    def draw(self):
+        pygame.draw.circle(screen, "red", (self.xpos, self.ypos), 50)
+    def path(self,targetX, targetY):
+        x=targetX - self.xpos
+        y=targetY - self.ypos
+        length = math.sqrt(x**2+y**2)
+        if length != 0:
+            x /= length
+            y /= length
+            self.xpos += x*self.speed*dt
+            self.ypos += y*self.speed*dt
+    def shoot(self, targetX, targetY):
+        return Bullet(self.xpos, self.ypos, targetX, targetY)
+
+class Bullet:
+    def __init__(self, xpos, ypos, targetX, targetY):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.speed = 200
+        x=targetX - self.xpos
+        y=targetY - self.ypos
+        length = math.sqrt(x**2+y**2)
+        if length != 0:
+            x /= length
+            y /= length
+            self.xVel = x*self.speed
+            self.yVel = y*self.speed
+    def update(self):
+        self.xpos += self.xVel*dt
+        self.ypos += self.yVel*dt
+        if self.xpos > screen.get_width() or self.xpos < 0 or self.ypos > screen.get_height() or self.ypos < 0:
+            return False
+        return True
+    def draw(self):
+        pygame.draw.circle(screen, "yellow", (self.xpos, self.ypos), 10)
 
 class Scene:
     def __init__(self):
@@ -58,11 +124,11 @@ class PlayScene(Scene):
     def __init__(self):
         super().__init__()
         self.player = Player(400,300)
+        self.glob = Glob(100,100)
     def update(self):
         screen.fill("black")
         self.player.update()
-
-#idea for overarching Game class takes inspiration from Nick Yoder's DoomClone
+        self.glob.update(self.player.xpos, self.player.ypos)
 class Game:
     def __init__(self):
         self.currentScene = MainMenu()
