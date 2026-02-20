@@ -1,0 +1,20 @@
+{
+  "applications": [
+    {
+      "applicationId": 1,
+      "name": "App One",
+      "description": "Description for App One",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "applicationId": 2,
+      "name": "App Two",
+      "description": "Description for App Two",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    }
+  ]
+}
