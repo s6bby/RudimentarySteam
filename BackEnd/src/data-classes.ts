@@ -3,7 +3,6 @@ import * as WriteUtils from './json-manipulation';
 class Library
 {
     private applications: Application[];
-    static applications: any;
     
     constructor()
     {
@@ -82,6 +81,14 @@ class Application
         this.reviews.push(new Review(user, review));
     }
 
+    removeReview(index: number): void
+    {
+        if (index >= 0 && index < this.reviews.length)
+        {
+            this.reviews.splice(index, 1);
+        }
+    }
+
     upvote(): void
     {
         this.upvotes++;
@@ -90,12 +97,12 @@ class Application
 
 class Review
 {
-    User: User; 
+    user: User; 
     comment: string;
 
     constructor(user: User, comment: string)
     {
-        this.User = user;
+        this.user = user;
         this.comment = comment;
     }
 }
@@ -121,15 +128,12 @@ const library = new Library();
     await library.loadFromFile();
     library.addApplication(1, 'App One', 'Description for App One');
     library.addApplication(2, 'App Two', 'Description for App Two');
-    await library.writeToFile();
-    console.log(library);
+    library.getApplicationById(1)?.addReview('Great app!', new User(1, 'UserOne', 'userone@example.com'));
     library.addApplication(3, 'App Three', 'Description for App Three');
     library.addApplication(4, 'App Four', 'Description for App Four');
     await library.writeToFile();
-    console.log(library);
+    console.dir(library, { depth: null });
+    library.getApplicationById(1)?.removeReview(0);
     library.removeApplication(3);
     library.removeApplication(4);
-    await library.writeToFile();
-    console.log(library);
 })();
-

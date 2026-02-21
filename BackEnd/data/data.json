@@ -6,12 +6,45 @@
       "description": "Description for App One",
       "downloads": 0,
       "upvotes": 0,
-      "reviews": []
+      "reviews": [
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        },
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        }
+      ]
     },
     {
       "applicationId": 2,
       "name": "App Two",
       "description": "Description for App Two",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "applicationId": 3,
+      "name": "App Three",
+      "description": "Description for App Three",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "applicationId": 4,
+      "name": "App Four",
+      "description": "Description for App Four",
       "downloads": 0,
       "upvotes": 0,
       "reviews": []
