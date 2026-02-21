@@ -55,7 +55,7 @@ const LISTINGS: Listing[] = [
   },
 ];
 
-function getEl<T extends HTMLElement>(id: string): T {
+function needEl<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`missing element: #${id}`);
   return node as T;
@@ -70,20 +70,31 @@ function escapeHtml(s: string) {
     .replaceAll("'", "&#039;");
 }
 
-const grid = getEl<HTMLDivElement>("listing-grid");
-const drawer = getEl<HTMLElement>("drawer");
-const drawerContent = getEl<HTMLDivElement>("drawer-content");
-const drawerClose = getEl<HTMLButtonElement>("drawer-close");
+// main ui
+const grid = needEl<HTMLDivElement>("listing-grid");
+const drawer = needEl<HTMLElement>("drawer");
+const drawerContent = needEl<HTMLDivElement>("drawer-content");
+const drawerClose = needEl<HTMLButtonElement>("drawer-close");
 
-const loading = getEl<HTMLDivElement>("loading-screen");
-const bar = getEl<HTMLDivElement>("loading-bar-fill");
-const app = getEl<HTMLDivElement>("app");
+const loading = needEl<HTMLDivElement>("loading-screen");
+const bar = needEl<HTMLDivElement>("loading-bar-fill");
+const app = needEl<HTMLDivElement>("app");
 
-const search = getEl<HTMLInputElement>("search");
-const libraryBtn = getEl<HTMLButtonElement>("library-btn");
+const search = needEl<HTMLInputElement>("search");
+const libraryBtn = needEl<HTMLButtonElement>("library-btn");
+
+// mobile menu
+const burgerBtn = needEl<HTMLButtonElement>("burger-btn");
+const mobileMenu = needEl<HTMLElement>("mobile-menu");
+const mobileMenuClose = needEl<HTMLButtonElement>("mobile-menu-close");
+const menuBackdrop = needEl<HTMLElement>("menu-backdrop");
+
+// content container
+const layoutCenter = document.querySelector(".layout-center") as HTMLElement;
 
 let selectedId: string | null = null;
 
+// drawer open/close
 function setDrawerOpen(open: boolean) {
   if (open) {
     drawer.classList.add("open");
@@ -106,21 +117,16 @@ function renderDrawer(l: Listing) {
     <div class="detail-row"><span>Updated</span><span>${escapeHtml(l.updated)}</span></div>
 
     <div class="drawer-actions">
-      <button class="btn" id="btn-view">View</button>
-      <button class="btn" id="btn-download">Download</button>
+      <button class="btn" id="btn-view" type="button">View</button>
+      <button class="btn" id="btn-download" type="button">Download</button>
     </div>
   `;
 
   const viewBtn = document.getElementById("btn-view") as HTMLButtonElement | null;
   const dlBtn = document.getElementById("btn-download") as HTMLButtonElement | null;
 
-  viewBtn?.addEventListener("click", () => {
-    alert(`view: ${l.title} (placeholder)`);
-  });
-
-  dlBtn?.addEventListener("click", () => {
-    alert(`download: ${l.title} (not implemented yet)`);
-  });
+  viewBtn?.addEventListener("click", () => alert(`view: ${l.title} (placeholder)`));
+  dlBtn?.addEventListener("click", () => alert(`download: ${l.title} (not implemented yet)`));
 }
 
 function renderListings(items: Listing[]) {
@@ -129,10 +135,7 @@ function renderListings(items: Listing[]) {
   for (const l of items) {
     const card = document.createElement("div");
     card.className = "card";
-
-    if (l.id === selectedId) {
-      card.classList.add("selected");
-    }
+    if (l.id === selectedId) card.classList.add("selected");
 
     card.innerHTML = `
       <div class="card-title">${escapeHtml(l.title)}</div>
@@ -172,6 +175,7 @@ function applySearch() {
   renderListings(filtered);
 }
 
+// loading screen
 function boot() {
   let progress = 0;
 
@@ -187,35 +191,155 @@ function boot() {
   }, 70);
 }
 
-/* drawer close */
-drawerClose.addEventListener("click", () => {
-  setDrawerOpen(false);
-});
+// mobile menu open/close
+function setMobileMenuOpen(open: boolean) {
+  if (open) {
+    mobileMenu.classList.add("open");
+    menuBackdrop.classList.add("open");
 
-/* click outside closes drawer */
+    burgerBtn.setAttribute("aria-expanded", "true");
+    mobileMenu.setAttribute("aria-hidden", "false");
+    menuBackdrop.setAttribute("aria-hidden", "false");
+  } else {
+    mobileMenu.classList.remove("open");
+    menuBackdrop.classList.remove("open");
+
+    burgerBtn.setAttribute("aria-expanded", "false");
+    mobileMenu.setAttribute("aria-hidden", "true");
+    menuBackdrop.setAttribute("aria-hidden", "true");
+  }
+}
+
+// simple page templates
+function renderPage(title: string, content: string) {
+  setDrawerOpen(false);
+
+  layoutCenter.innerHTML = `
+    <section class="panel center-panel">
+      <div class="panel-title">${escapeHtml(title)}</div>
+      <div class="page-body">
+        ${content}
+      </div>
+    </section>
+  `;
+}
+
+function handleNavAction(action: string) {
+  setMobileMenuOpen(false);
+
+  switch (action) {
+    case "home":
+      window.location.href = "/";
+      break;
+
+    case "library":
+      renderPage(
+        "Your Library",
+        `
+          <p>This is your library.</p>
+          <p>Downloaded software will appear here later.</p>
+        `
+      );
+      break;
+
+    case "friends":
+      renderPage(
+        "Friends",
+        `
+          <p>Your friends list will appear here.</p>
+          <p>Social stuff coming soon.</p>
+        `
+      );
+      break;
+
+    case "profile":
+      renderPage(
+        "My Profile",
+        `
+          <p>User profile info goes here.</p>
+          <p>Username, avatar, stats, etc.</p>
+        `
+      );
+      break;
+
+    case "settings":
+      renderPage(
+        "Settings & Privacy",
+        `
+          <p>Account settings and privacy controls.</p>
+          <p>Theme, notifications, security options.</p>
+        `
+      );
+      break;
+
+    case "help":
+      renderPage(
+        "Help",
+        `
+          <p>Need help?</p>
+          <p>FAQ and support options will go here.</p>
+        `
+      );
+      break;
+
+    case "signout":
+      alert("Signed out (placeholder)");
+      break;
+  }
+}
+
+// drawer close
+drawerClose.addEventListener("click", () => setDrawerOpen(false));
+
+// click outside closes drawer (not menu)
 document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
+
   const clickedCard = !!target.closest(".card");
   const clickedDrawer = !!target.closest("#drawer");
+  const clickedMenu = !!target.closest("#mobile-menu");
+  const clickedBurger = !!target.closest("#burger-btn");
 
-  if (!clickedCard && !clickedDrawer) {
+  if (clickedMenu || clickedBurger) return;
+  if (!clickedCard && !clickedDrawer) setDrawerOpen(false);
+});
+
+// esc closes stuff
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
     setDrawerOpen(false);
+    setMobileMenuOpen(false);
   }
 });
 
-/* esc closes drawer */
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") setDrawerOpen(false);
-});
-
-/* search */
+// search
 search.addEventListener("input", applySearch);
 
-/* library button */
-libraryBtn.addEventListener("click", () => {
-  alert("library (placeholder)");
+// header library button
+libraryBtn.addEventListener("click", () => handleNavAction("library"));
+
+// burger open/close
+burgerBtn.addEventListener("click", () => {
+  const isOpen = mobileMenu.classList.contains("open");
+  setMobileMenuOpen(!isOpen);
 });
 
-/* start */
+mobileMenuClose.addEventListener("click", () => setMobileMenuOpen(false));
+menuBackdrop.addEventListener("click", () => setMobileMenuOpen(false));
+
+// nav clicks (desktop + mobile)
+document.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
+  el.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const action = el.getAttribute("data-nav");
+    if (action) handleNavAction(action);
+  });
+});
+
+// resize cleanup
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 768) setMobileMenuOpen(false);
+});
+
 boot();
 applySearch();
