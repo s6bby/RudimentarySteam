@@ -33,22 +33,22 @@ class Library
     addApplication(id: number, name: string, description: string): void
     {
         const application = new Application(id, name, description);
-        if (this.applications.some(app => app.applicationId === application.applicationId))
+        if (this.applications.some(app => app.id === application.id))
         {
-            console.error(`Application with ID ${application.applicationId} already exists.`);
+            console.error(`Application with ID ${application.id} already exists.`);
             return;
         }
         this.applications.push(application);
     }
 
-    removeApplication(applicationId: number): void
+    removeApplication(id: number): void
     {
-        this.applications = this.applications.filter(app => app.applicationId !== applicationId);
+        this.applications = this.applications.filter(app => app.id !== id);
     }
 
-    getApplicationById(applicationId: number): Application | undefined
+    getApplicationById(id: number): Application | undefined
     {
-        return this.applications.find(app => app.applicationId === applicationId);
+        return this.applications.find(app => app.id === id);
     }
 
     getAllApplications(): Application[]
@@ -59,16 +59,16 @@ class Library
 
 class Application
 {
-    applicationId: number;
+    id: number;
     name: string;
     description: string;
     downloads: number;
     upvotes: number;
     reviews: Review[];
     
-    constructor(applicationId: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: Review[] = [])
+    constructor(id: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: Review[] = [])
     {
-        this.applicationId = applicationId;
+        this.id = id;
         this.name = name;
         this.description = description;
         this.downloads = downloads;

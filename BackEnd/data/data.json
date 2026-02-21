@@ -1,7 +1,7 @@
 {
   "applications": [
     {
-      "applicationId": 1,
+      "id": 1,
       "name": "App One",
       "description": "Description for App One",
       "downloads": 0,
@@ -22,11 +22,19 @@
             "email": "userone@example.com"
           },
           "comment": "Great app!"
+        },
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
         }
       ]
     },
     {
-      "applicationId": 2,
+      "id": 2,
       "name": "App Two",
       "description": "Description for App Two",
       "downloads": 0,
@@ -34,7 +42,7 @@
       "reviews": []
     },
     {
-      "applicationId": 3,
+      "id": 3,
       "name": "App Three",
       "description": "Description for App Three",
       "downloads": 0,
@@ -42,7 +50,7 @@
       "reviews": []
     },
     {
-      "applicationId": 4,
+      "id": 4,
       "name": "App Four",
       "description": "Description for App Four",
       "downloads": 0,
