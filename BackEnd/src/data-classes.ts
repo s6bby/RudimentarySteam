@@ -33,9 +33,9 @@ class Library
     addApplication(id: number, name: string, description: string): void
     {
         const application = new Application(id, name, description);
-        if (this.applications.some(app => app.id === application.id))
+        if (this.applications.some(app => app.getId() === application.getId()))
         {
-            console.error(`Application with ID ${application.id} already exists.`);
+            console.error(`Application with ID ${application.getId()} already exists.`);
             return;
         }
         this.applications.push(application);
@@ -43,12 +43,12 @@ class Library
 
     removeApplication(id: number): void
     {
-        this.applications = this.applications.filter(app => app.id !== id);
+        this.applications = this.applications.filter(app => app.getId() !== id);
     }
 
     getApplicationById(id: number): Application | undefined
     {
-        return this.applications.find(app => app.id === id);
+        return this.applications.find(app => app.getId() === id);
     }
 
     getAllApplications(): Application[]
@@ -59,12 +59,12 @@ class Library
 
 class Application
 {
-    id: number;
-    name: string;
-    description: string;
-    downloads: number;
-    upvotes: number;
-    reviews: Review[];
+    private id: number;
+    private name: string;
+    private description: string;
+    private downloads: number;
+    private upvotes: number;
+    private reviews: Review[];
     
     constructor(id: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: Review[] = [])
     {
@@ -74,6 +74,11 @@ class Application
         this.downloads = downloads;
         this.upvotes = upvotes;
         this.reviews = reviews;
+    }
+
+    getId(): number
+    {
+        return this.id;
     }
 
     addReview(review: string, user: User): void
@@ -97,8 +102,8 @@ class Application
 
 class Review
 {
-    user: User; 
-    comment: string;
+    private user: User; 
+    private comment: string;
 
     constructor(user: User, comment: string)
     {
@@ -109,9 +114,9 @@ class Review
 
 class User
 {
-    userId: number;
-    username: string;
-    email: string;
+    private userId: number;
+    private username: string;
+    private email: string;
 
     constructor(userId: number, username: string, email: string)
     {
