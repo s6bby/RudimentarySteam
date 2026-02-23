@@ -1,0 +1,98 @@
+{
+  "applications": [
+    {
+      "name": "App One",
+      "description": "Description for App One",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": [
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        },
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        },
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        }
+      ]
+    },
+    {
+      "name": "App Two",
+      "description": "Description for App Two",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "name": "App Three",
+      "description": "Description for App Three",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "name": "App Four",
+      "description": "Description for App Four",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "id": 1,
+      "name": "App One",
+      "description": "Description for App One",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": [
+        {
+          "user": {
+            "userId": 1,
+            "username": "UserOne",
+            "email": "userone@example.com"
+          },
+          "comment": "Great app!"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "App Two",
+      "description": "Description for App Two",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "id": 3,
+      "name": "App Three",
+      "description": "Description for App Three",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    },
+    {
+      "id": 4,
+      "name": "App Four",
+      "description": "Description for App Four",
+      "downloads": 0,
+      "upvotes": 0,
+      "reviews": []
+    }
+  ]
+}

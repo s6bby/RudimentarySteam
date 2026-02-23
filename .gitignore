@@ -3,3 +3,4 @@ bin/*
 .vscode/*
 Pythongame/.venv
 __pycache__/
+.venv-files | grep node_modules

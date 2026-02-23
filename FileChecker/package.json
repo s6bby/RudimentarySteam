@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@api/virustotal": "file:.api/apis/virustotal",
+    "axios": "^1.13.5",
+    "bottleneck": "^2.19.5",
+    "dotenv": "^17.3.1"
+  }
+}

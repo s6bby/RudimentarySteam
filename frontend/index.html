@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rudimentary Steam</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- loading screen -->
+    <div id="loading-screen" class="loading-screen" aria-live="polite">
+      <div class="loading-box">
+        <div class="loading-title">Rudimentary Steam</div>
+        <div class="loading-subtitle">starting up…</div>
+        <div class="loading-bar">
+          <div id="loading-bar-fill" class="loading-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- main app -->
+    <div id="app" class="app">
+      <header class="header">
+        <div>
+          <div class="brand-name">Rudimentary Steam</div>
+          <div class="brand-sub">A Home for Software to Live In</div>
+        </div>
+
+        <div class="header-actions">
+          <input id="search" class="search" placeholder="search listings..." />
+          <button id="library-btn" class="btn">Your Library</button>
+        </div>
+      </header>
+
+      <main class="layout-center">
+        <section class="panel center-panel">
+          <div class="panel-title">Listings</div>
+          <div id="listing-grid" class="grid"></div>
+          <div class="tiny-note">click a listing to open details →</div>
+        </section>
+
+        <!-- drawer -->
+        <aside id="drawer" class="drawer" aria-hidden="true">
+          <div class="drawer-header">
+            <div class="drawer-title">Details</div>
+            <button id="drawer-close" class="drawer-close" aria-label="Close">✕</button>
+          </div>
+
+          <div id="drawer-content" class="drawer-content">
+            click a listing to see details
+          </div>
+        </aside>
+      </main>
+
+      <footer class="footer">
+        Rudimentary Steam • Placeholder UI
+      </footer>
+
+      <script type="module" src="/src/main.ts"></script>
+    </div>
+  </body>
+</html>
