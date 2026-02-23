@@ -30,11 +30,59 @@
           <div class="brand-sub">A Home for Software to Live In</div>
         </div>
 
+        <!-- desktop nav (collapses into burger < 768px) -->
+        <nav class="nav" aria-label="Primary">
+          <a class="nav-link" href="#" data-nav="home">Home</a>
+          <a class="nav-link" href="#" data-nav="library">Library</a>
+          <a class="nav-link" href="#" data-nav="friends">Friends</a>
+          <a class="nav-link" href="#" data-nav="profile">My Profile</a>
+
+          <span class="nav-divider" aria-hidden="true"></span>
+
+          <a class="nav-link" href="#" data-nav="settings">Settings &amp; Privacy</a>
+          <a class="nav-link" href="#" data-nav="help">Help</a>
+          <a class="nav-link danger" href="#" data-nav="signout">Sign out</a>
+        </nav>
+
         <div class="header-actions">
+          <!-- mobile burger -->
+          <button
+            id="burger-btn"
+            class="burger"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+          >
+            ☰
+          </button>
+
           <input id="search" class="search" placeholder="search listings..." />
           <button id="library-btn" class="btn">Your Library</button>
         </div>
       </header>
+
+      <!-- mobile menu + backdrop -->
+      <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
+
+      <aside id="mobile-menu" class="mobile-menu" aria-hidden="true">
+        <div class="mobile-menu-header">
+          <div class="mobile-menu-title">Menu</div>
+          <button id="mobile-menu-close" class="drawer-close" aria-label="Close menu">✕</button>
+        </div>
+
+        <div class="mobile-menu-links">
+          <a class="mobile-link" href="#" data-nav="home">Home</a>
+          <a class="mobile-link" href="#" data-nav="library">Library</a>
+          <a class="mobile-link" href="#" data-nav="friends">Friends</a>
+          <a class="mobile-link" href="#" data-nav="profile">My Profile</a>
+
+          <hr class="mobile-divider" />
+
+          <a class="mobile-link" href="#" data-nav="settings">Settings &amp; Privacy</a>
+          <a class="mobile-link" href="#" data-nav="help">Help</a>
+          <a class="mobile-link danger" href="#" data-nav="signout">Sign out</a>
+        </div>
+      </aside>
 
       <main class="layout-center">
         <section class="panel center-panel">
