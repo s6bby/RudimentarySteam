@@ -8,9 +8,13 @@ class Player:
         self.ypos = ypos
         self.speed = 100
         self.health = 100
-    def update(self):
+        self.collider = pygame.Rect(self.xpos-70, self.ypos-70, 140, 140)
+    def update(self):       
         self.move()
-        self.draw()
+        self.checkCollisions()
+        self.draw()      
+    def checkCollisions(self):
+        pass        #TODO
     def move(self):
         x=0
         y=0
@@ -24,7 +28,7 @@ class Player:
         if keysPressed[pygame.K_d]:
             x+=1
         length = math.sqrt(x**2+y**2)   
-        #Normalize the vector to account for diagonal speed increase
+        #Normalize the vector to account for diagonal speed increase TODO: Move this logic into a vector2
         if length != 0:     
             x /= length
             y /= length
@@ -113,7 +117,8 @@ class MainMenu(Scene):
         self.draw()
         keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_SPACE]:
-            game.currentScene = PlayScene()
+            return PlayScene()
+        return self
     def draw(self):
         screen.fill("black")
         font = pygame.font.SysFont(None, 48)
@@ -129,11 +134,13 @@ class PlayScene(Scene):
         screen.fill("black")
         self.player.update()
         self.glob.update(self.player.xpos, self.player.ypos)
+        return self
+        
 class Game:
     def __init__(self):
         self.currentScene = MainMenu()
     def update(self):
-        self.currentScene.update()
+        self.currentScene = self.currentScene.update()
         global dt
         dt = clock.tick(60) / 1000   
         pygame.display.flip()
@@ -153,5 +160,5 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)  #TODO: Window resizing needs to be accounted for in the way the game is drawn
     clock = pygame.time.Clock()
     dt = 0
-    game = Game()
+    game = Game()   
     game.run()
