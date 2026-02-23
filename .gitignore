@@ -2,3 +2,4 @@ bin/*
 *.o
 .vscode/*
 Pythongame/.venv
+__pycache__/
