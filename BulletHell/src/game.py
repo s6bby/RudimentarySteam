@@ -130,10 +130,12 @@ class PlayScene(Scene):
         super().__init__()
         self.player = Player(400,300)
         self.glob = Glob(100,100)
+        self.fpsCounter = FPSCounter()
     def update(self):
         screen.fill("black")
         self.player.update()
         self.glob.update(self.player.xpos, self.player.ypos)
+        self.fpsCounter.draw()
         return self
         
 class Game:
@@ -154,6 +156,14 @@ class Game:
             if event.type == pygame.QUIT:
                 pygame.quit()
         
+
+class FPSCounter:
+    def __init__(self):
+        self.font = pygame.font.SysFont(None, 24)
+    def draw(self):
+        fps = int(clock.get_fps())
+        text = self.font.render(f"FPS: {fps}", True, "white")
+        screen.blit(text, (10, 10))
 
 if __name__ == "__main__":
     pygame.init()
