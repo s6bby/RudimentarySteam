@@ -117,7 +117,7 @@ class MainMenu(Scene):
         self.draw()
         keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_SPACE]:
-            return PlayScene()
+            return PlayScene()      #FR: Entering game
         return self
     def draw(self):
         screen.fill("black")
