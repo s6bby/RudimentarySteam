@@ -9,10 +9,26 @@ class Player:
         self.speed = 100
         self.health = 100
         self.collider = pygame.Rect(self.xpos-70, self.ypos-70, 140, 140)
+        self.bullets = []
+        self.shootTimer = 0
+        self.settings = settings
     def update(self):       
         self.move()
         self.checkCollisions()
-        self.draw()      
+        self.draw()  
+        self.shoot()         
+    def shoot(self):
+        keysPressed = pygame.key.get_pressed()
+        self.shootTimer += dt
+        if keysPressed[pygame.K_SPACE] and self.shootTimer >= 0.25:
+            self.shootTimer = 0
+            mouseX, mouseY = pygame.mouse.get_pos()
+            self.bullets.append(Bullet(self.xpos, self.ypos, mouseX, mouseY))
+        for bullet in self.bullets[:]:
+            if not bullet.update():
+                self.bullets.remove(bullet)
+            else:
+                bullet.draw()
     def checkCollisions(self):
         pass        #TODO
     def move(self):
@@ -35,7 +51,12 @@ class Player:
             self.xpos += x*self.speed*dt
             self.ypos += y*self.speed*dt
     def draw(self):
-        pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
+        if self.settings.theme == "Default":
+            pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
+        elif self.settings.theme == "Dark":
+            pygame.draw.circle(screen, "cyan", (self.xpos, self.ypos), 70)
+        elif self.settings.theme == "Light":
+            pygame.draw.circle(screen, "navy", (self.xpos, self.ypos), 70)
 
 class Enemy:
     def __init__(self, xpos, ypos):
@@ -118,12 +139,50 @@ class MainMenu(Scene):
         keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_SPACE]:
             return PlayScene()      #FR: Entering game
+        elif keysPressed[pygame.K_t]:
+            return ThemeShop()     #FR: Entering theme shop
+        elif keysPressed[pygame.K_s]:
+            return SettingsScene() #FR: Entering settings
         return self
     def draw(self):
         screen.fill("black")
         font = pygame.font.SysFont(None, 48)
         text = font.render("Press Space to Start", True, "white")
         screen.blit(text, (200, 250))
+        text2 = font.render("Press T for Theme Shop", True, "white")
+        screen.blit(text2, (150, 300))
+        text3 = font.render("Press S for Settings", True, "white")
+        screen.blit(text3, (150, 350))
+
+class ThemeShop(Scene):
+    def __init__(self):
+        super().__init__()
+    def update(self):
+        keysPressed = pygame.key.get_pressed()
+        if keysPressed[pygame.K_SPACE]:
+            return MainMenu()     #FR: Returning to main menu
+        elif keysPressed[pygame.K_1] and not settings.unlockedThemes["Default"]:
+            settings.unlockedThemes["Default"] = True
+        elif keysPressed[pygame.K_2] and not settings.unlockedThemes["Dark"]:
+            settings.unlockedThemes["Dark"] = True
+        elif keysPressed[pygame.K_3] and not settings.unlockedThemes["Light"]:
+            settings.unlockedThemes["Light"] = True
+        self.draw()
+        return self
+    def draw(self):
+        screen.fill("black")
+        font = pygame.font.SysFont(None, 48)
+        text = font.render("Theme Shop", True, "white")
+        screen.blit(text, (50, 50))
+        text2 = font.render("Press Space to Return", True, "white")
+        screen.blit(text2, (50, 100))
+        text3 = font.render("Press 1 to buy Default Theme", True, "white")
+        screen.blit(text3, (50, 150))
+        text4 = font.render("Press 2 to buy Dark Theme", True, "white")
+        screen.blit(text4, (50, 200))
+        text5 = font.render("Press 3 to buy Light Theme", True, "white")
+        screen.blit(text5, (50, 250))
+
 
 class PlayScene(Scene):
     def __init__(self):
@@ -137,10 +196,54 @@ class PlayScene(Scene):
         self.glob.update(self.player.xpos, self.player.ypos)
         self.fpsCounter.draw()
         return self
-        
+
+class SettingsScene(Scene):
+    def __init__(self):
+        super().__init__()
+    def update(self):
+        keysPressed = pygame.key.get_pressed()
+        if keysPressed[pygame.K_SPACE]:
+            return MainMenu()     #FR: Returning to main menu
+        elif keysPressed[pygame.K_UP]:
+            settings.volume = min(1.0, settings.volume + 0.1)   #FR: Increase volume
+        elif keysPressed[pygame.K_DOWN]:
+            settings.volume = max(0.0, settings.volume - 0.1)   #FR: Decrease volume
+        elif keysPressed[pygame.K_LEFT]:
+            if settings.difficulty == "Hard":
+                settings.difficulty = "Normal"
+            elif settings.difficulty == "Normal":
+                settings.difficulty = "Easy"
+        elif keysPressed[pygame.K_RIGHT]:
+            if settings.difficulty == "Easy":
+                settings.difficulty = "Normal"
+            elif settings.difficulty == "Normal":
+                settings.difficulty = "Hard"
+        elif keysPressed[pygame.K_1] and settings.unlockedThemes["Default"]:
+            settings.theme = "Default"
+        elif keysPressed[pygame.K_2] and settings.unlockedThemes["Dark"]:
+            settings.theme = "Dark"
+        elif keysPressed[pygame.K_3] and settings.unlockedThemes["Light"]:
+            settings.theme = "Light"
+        self.draw()
+        return self
+    def draw(self):
+        screen.fill("black")
+        font = pygame.font.SysFont(None, 48)
+        text = font.render("Settings", True, "white")
+        screen.blit(text, (50, 50))
+        text2 = font.render("Press Space to Return", True, "white")
+        screen.blit(text2, (50, 100))
+        text3 = font.render(f"Volume: {settings.volume}", True, "white")
+        screen.blit(text3, (50, 150))
+        text4 = font.render(f"Difficulty: {settings.difficulty}", True, "white")
+        screen.blit(text4, (50, 200))
+        text5 = font.render(f"Theme: {settings.theme}", True, "white")
+        screen.blit(text5, (50, 250))
+      
 class Game:
     def __init__(self):
         self.currentScene = MainMenu()
+        self.settings = settings
     def update(self):
         self.currentScene = self.currentScene.update()
         global dt
@@ -165,10 +268,20 @@ class FPSCounter:
         text = self.font.render(f"FPS: {fps}", True, "white")
         screen.blit(text, (10, 10))
 
+class Settings:
+    def __init__(self):
+        self.volume = 1.0
+        self.difficulty = "Normal"
+        self.theme = "Default"
+        self.unlockedThemes = {"Default": True, "Dark": False, "Light": False}
+    
+    
+
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)  #TODO: Window resizing needs to be accounted for in the way the game is drawn
+    screen = pygame.display.set_mode((1920, 1080))  #TODO: Window resizing needs to be accounted for in the way the game is drawn
     clock = pygame.time.Clock()
     dt = 0
+    settings = Settings()
     game = Game()   
     game.run()
