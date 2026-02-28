@@ -70,6 +70,43 @@ function escapeHtml(s: string) {
     .replaceAll("'", "&#039;");
 }
 
+// -----------------------------
+// theme toggle (NEW)
+// -----------------------------
+type Theme = "dark" | "light";
+
+function applyTheme(theme: Theme) {
+  // default is dark (no class needed), but we keep it explicit for clarity
+  document.body.classList.remove("theme-dark", "theme-light");
+  document.body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
+  localStorage.setItem("theme", theme);
+
+  const btn = document.getElementById("theme-toggle") as HTMLButtonElement | null;
+  if (btn) {
+    if (theme === "dark") {
+      btn.textContent = "🌙";
+      btn.setAttribute("aria-label", "Switch to light theme");
+      btn.title = "Switch to light theme";
+    } else {
+      btn.textContent = "☀️";
+      btn.setAttribute("aria-label", "Switch to dark theme");
+      btn.title = "Switch to dark theme";
+    }
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("theme");
+  const theme: Theme = saved === "light" ? "light" : "dark";
+  applyTheme(theme);
+
+  const toggleBtn = document.getElementById("theme-toggle") as HTMLButtonElement | null;
+  toggleBtn?.addEventListener("click", () => {
+    const isLight = document.body.classList.contains("theme-light");
+    applyTheme(isLight ? "dark" : "light");
+  });
+}
+
 // main ui
 const grid = needEl<HTMLDivElement>("listing-grid");
 const drawer = needEl<HTMLElement>("drawer");
@@ -341,5 +378,7 @@ window.addEventListener("resize", () => {
   if (window.innerWidth > 768) setMobileMenuOpen(false);
 });
 
+// startup
+initTheme(); // (NEW) set theme before showing UI
 boot();
 applySearch();
