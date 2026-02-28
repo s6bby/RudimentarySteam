@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 
 :root {
-  /* earthy dark palette */
+  /* earthy dark palette (DEFAULT) */
   --bg1: #1b1a12;
   --bg2: #14130d;
   --bg3: #0c0b08;
@@ -21,6 +21,30 @@
   --accent2: #c0a45e;  /* warm mustard */
   --danger: #c96b4b;   /* terracotta */
 }
+
+/* (NEW) light theme overrides using the same variables */
+body.theme-light {
+  --bg1: #f6f6f2;
+  --bg2: #eeeeea;
+  --bg3: #e7e7e3;
+
+  --surface: #ffffff;
+  --surface2: #f3f3ef;
+  --surface3: #e9e9e4;
+
+  --border: #d4d4cc;
+  --border2: #c4c4bb;
+
+  --text: #191915;
+  --muted: #4f4f46;
+
+  --accent: #4f7b4a;
+  --accent2: #9a7a2f;
+  --danger: #b04b2f;
+}
+
+/* optional explicit dark marker, not required but nice for readability */
+body.theme-dark { }
 
 body {
   margin: 0;
@@ -96,6 +120,9 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* (NEW) make header background respect theme */
+body.theme-light .header { background: var(--surface); }
+
 .brand-name {
   font-weight: 900;
   letter-spacing: -0.2px;
@@ -138,6 +165,26 @@ body {
 }
 
 .btn:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+}
+
+/* (NEW) small icon button for theme toggle */
+.icon-btn {
+  width: 42px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
   background: var(--surface2);
   border-color: var(--border2);
 }
@@ -252,6 +299,9 @@ body {
   border-bottom: 1px solid var(--border);
   background: #13120c;
 }
+
+/* (NEW) make drawer header respect theme */
+body.theme-light .drawer-header { background: var(--surface); }
 
 .drawer-title { font-weight: 900; }
 
@@ -415,6 +465,9 @@ body {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
+
+/* (NEW) theme support for mobile menu header */
+body.theme-light .mobile-menu-header { background: var(--surface); }
 
 .mobile-menu-title { font-weight: 900; }
 
