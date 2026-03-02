@@ -37,15 +37,24 @@ class Button:
 class Scene:
     def __init__(self, game):
         self.game = game
+    def handle_event(self, event): pass
+    def update(self, dt): pass
+    def draw(self, screen): pass
 
-    def handle_event(self, event):
-        pass
+class Platform:
+    def __init__(self, rect, moving=False, move_range=0, speed=0):
+        self.rect = pygame.Rect(rect)
+        self.start_x = self.rect.x
+        self.moving = moving
+        self.move_range = move_range
+        self.speed = speed
+        self.direction = 1
 
     def update(self, dt):
-        pass
-
-    def draw(self, screen):
-        pass
+        if self.moving:
+            self.rect.x += self.speed * self.direction * dt
+            if abs(self.rect.x - self.start_x) >= self.move_range:
+                self.direction *= -1
 
 class MenuScene(Scene):
     def __init__(self, game):
@@ -72,7 +81,6 @@ class MenuScene(Scene):
 class GameScene(Scene):
     def __init__(self, game):
         super().__init__(game)
-
         w, h = self.game.screen.get_size()
 
         self.player = pygame.Rect(100, h - 150, 50, 50)
@@ -83,23 +91,60 @@ class GameScene(Scene):
         self.jump_strength = -700
         self.on_ground = False
 
-        self.ground = pygame.Rect(0, h - 100, w * 3, 100)
-
         self.camera_x = 0
 
-        self.enemies = [
-            {
-                "rect": pygame.Rect(600, h - 150, 50, 50),
-                "dir": 1
-            },
-            {
-                "rect": pygame.Rect(1000, h - 150, 50, 50),
-                "dir": -1
-            }
+        self.platforms = [
+            Platform((0, h - 100, w * 3, 100)),
+            Platform((400, h - 250, 200, 20)),
+            Platform((750, h - 350, 200, 20)),
+            Platform((1100, h - 220, 200, 20)),
+            Platform((1500, h - 300, 250, 20), moving=True, move_range=200, speed=150),
         ]
 
-    def handle_event(self, event):
-        pass
+        self.enemies = [
+            {"rect": pygame.Rect(600, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
+            {"rect": pygame.Rect(1200, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
+        ]
+
+        middle_platform = self.platforms[2].rect
+        self.jumping_enemy = {
+            "rect": pygame.Rect(
+                middle_platform.centerx - 25,
+                middle_platform.top - 50,
+                50,
+                50
+            ),
+            "vel": pygame.Vector2(0, 0),
+            "jump_strength": -600
+        }
+
+        self.level_end = pygame.Rect(2000, h - 200, 100, 100)
+
+    def move_and_collide(self, rect, velocity, dt):
+        previous_rect = rect.copy()
+
+        rect.x += velocity.x * dt
+        for platform in self.platforms:
+            if rect.colliderect(platform.rect):
+                if velocity.x > 0:
+                    rect.right = platform.rect.left
+                elif velocity.x < 0:
+                    rect.left = platform.rect.right
+
+        rect.y += velocity.y * dt
+        grounded = False
+
+        for platform in self.platforms:
+            if rect.colliderect(platform.rect):
+                if velocity.y > 0 and previous_rect.bottom <= platform.rect.top:
+                    rect.bottom = platform.rect.top
+                    velocity.y = 0
+                    grounded = True
+                elif velocity.y < 0 and previous_rect.top >= platform.rect.bottom:
+                    rect.top = platform.rect.bottom
+                    velocity.y = 0
+
+        return grounded
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -110,67 +155,132 @@ class GameScene(Scene):
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.player_vel.x = self.move_speed
 
-        if (keys[pygame.K_SPACE]) and self.on_ground:
+        if keys[pygame.K_SPACE] and self.on_ground:
             self.player_vel.y = self.jump_strength
-            self.on_ground = False
 
         self.player_vel.y += self.gravity * dt
 
-        self.player.x += self.player_vel.x * dt
-        self.player.y += self.player_vel.y * dt
+        for platform in self.platforms:
+            platform.update(dt)
 
-        if self.player.colliderect(self.ground):
-            self.player.bottom = self.ground.top
-            self.player_vel.y = 0
-            self.on_ground = True
-
+        self.on_ground = self.move_and_collide(self.player, self.player_vel, dt)
         self.camera_x = self.player.x - 300
 
         for enemy in self.enemies:
-            enemy["rect"].x += 200 * enemy["dir"] * dt
+            rect = enemy["rect"]
+            vel = enemy["vel"]
 
-            if enemy["rect"].left < 400 or enemy["rect"].right > 1400:
-                enemy["dir"] *= -1
+            vel.x = -200 if self.player.centerx < rect.centerx else 200
+            vel.y += self.gravity * dt
 
-            if self.player.colliderect(enemy["rect"]):
+            self.move_and_collide(rect, vel, dt)
+
+            if rect.colliderect(self.player):
                 self.player.topleft = (100, self.game.screen.get_height() - 150)
                 self.player_vel = pygame.Vector2(0, 0)
+
+        rect = self.jumping_enemy["rect"]
+        vel = self.jumping_enemy["vel"]
+
+        vel.x = 0
+        vel.y += self.gravity * dt
+
+        grounded = self.move_and_collide(rect, vel, dt)
+
+        if grounded:
+            vel.y = self.jumping_enemy["jump_strength"]
+
+        if rect.colliderect(self.player):
+            self.player.topleft = (100, self.game.screen.get_height() - 150)
+            self.player_vel = pygame.Vector2(0, 0)
+
+        if self.player.colliderect(self.level_end):
+            self.game.change_scene(LevelCompletionScene(self.game))
 
     def draw(self, screen):
         screen.fill(colors["sky"])
 
-        pygame.draw.rect(screen, colors["ground"],
-                         (self.ground.x - self.camera_x,
-                          self.ground.y,
-                          self.ground.width,
-                          self.ground.height))
+        for platform in self.platforms:
+            pygame.draw.rect(
+                screen,
+                colors["ground"],
+                (platform.rect.x - self.camera_x,
+                 platform.rect.y,
+                 platform.rect.width,
+                 platform.rect.height)
+            )
 
-        pygame.draw.rect(screen, colors["blue"],
-                         (self.player.x - self.camera_x,
-                          self.player.y,
-                          self.player.width,
-                          self.player.height))
+        pygame.draw.rect(
+            screen,
+            colors["blue"],
+            (self.player.x - self.camera_x,
+             self.player.y,
+             50,
+             50)
+        )
 
         for enemy in self.enemies:
-            pygame.draw.rect(screen, colors["red"],
-                             (enemy["rect"].x - self.camera_x,
-                              enemy["rect"].y,
-                              50,
-                              50))
+            pygame.draw.rect(
+                screen,
+                colors["red"],
+                (enemy["rect"].x - self.camera_x,
+                 enemy["rect"].y,
+                 50,
+                 50)
+            )
+
+        pygame.draw.rect(
+            screen,
+            (255, 0, 255),
+            (self.jumping_enemy["rect"].x - self.camera_x,
+             self.jumping_enemy["rect"].y,
+             50,
+             50)
+        )
+
+        pygame.draw.rect(
+            screen,
+            (255, 215, 0),
+            (self.level_end.x - self.camera_x,
+             self.level_end.y,
+             100,
+             100)
+        )
 
 class LevelCompletionScene(Scene):
     def __init__(self, game):
         super().__init__(game)
+        w, h = self.game.screen.get_size()
+
+        self.font = pygame.font.Font(None, 80)
+
+        self.menu_button = Button(
+            (w//2 - 150, h//2 + 50, 300, 100),
+            "Back to Menu",
+            pygame.font.Font(None, 60),
+            colors["gray"],
+            colors["lightgray"]
+        )
+
+    def handle_event(self, event):
+        if self.menu_button.is_clicked(event):
+            self.game.change_scene(MenuScene(self.game))
+
+    def draw(self, screen):
+        screen.fill(colors["black"])
+
+        text = self.font.render("LEVEL COMPLETE!", True, colors["white"])
+        screen.blit(text, text.get_rect(center=(screen.get_width()//2, screen.get_height()//2 - 50)))
+
+        self.menu_button.draw(screen)
 
 class Game:
     def __init__(self, width=1280, height=720):
         pygame.init()
-
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("2D Side Scroller")
         self.clock = pygame.time.Clock()
         self.running = True
-
         self.current_scene = MenuScene(self)
 
     def change_scene(self, scene):
