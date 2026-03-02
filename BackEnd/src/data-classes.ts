@@ -1,29 +1,10 @@
 import * as WriteUtils from './json-manipulation';
+import { z } from "zod";
 
-class Library
+class Data
 {
-    private applications: Application[];
-    
-    constructor()
-    {
-        this.applications = [];
-    }
-
-    public async loadFromFile(filePath: string = '../data/data.json'): Promise<void>
-    {
-        const data = await WriteUtils.loadFromJsonFile(filePath);
-        if (data) {
-            const applications = data.applications.map((appData: any) => new Application(
-                appData.applicationId,
-                appData.name,
-                appData.description,
-                appData.downloads,
-                appData.upvotes,
-                appData.reviews
-            ));
-            this.applications = applications;
-        }
-    }
+    private applications: Map<number, Application> = new Map<number, Application>();
+    private users: Map<number, User> = new Map<number, User>();
 
     async writeToFile(filePath: string = '../data/data.json'): Promise<void>
     {
@@ -33,27 +14,61 @@ class Library
     addApplication(id: number, name: string, description: string): void
     {
         const application = new Application(id, name, description);
-        if (this.applications.some(app => app.getId() === application.getId()))
+        if (this.applications.has(application.getId()))
         {
             console.error(`Application with ID ${application.getId()} already exists.`);
             return;
         }
-        this.applications.push(application);
+        this.applications.set(application.getId(), application);
     }
 
     removeApplication(id: number): void
     {
-        this.applications = this.applications.filter(app => app.getId() !== id);
+        this.applications.delete(id);
     }
 
     getApplicationById(id: number): Application | undefined
     {
-        return this.applications.find(app => app.getId() === id);
+        return this.applications.get(id);
     }
 
     getAllApplications(): Application[]
     {
-        return this.applications;
+        return Array.from(this.applications.values());
+    }
+    
+    addUser(userId: number, username: string, email: string): void
+    {
+        const user = new User(userId, username, email);
+        if (this.users.has(user.getUserId()))
+        {
+            console.error(`User with ID ${user.getUserId()} already exists.`);
+            return;
+        }
+        this.users.set(user.getUserId(), user);
+    }
+
+    removeUser(userId: number): void
+    {
+        this.users.delete(userId);
+    }
+
+    getUserById(userId: number): User | undefined
+    {
+        return this.users.get(userId);
+    }
+
+    getAllUsers(): User[]
+    {
+        return Array.from(this.users.values());
+    }
+
+    toJSON()
+    {
+        return {
+            applications: Array.from(this.applications.values()),
+            users: Array.from(this.users.values())
+        };
     }
 }
 
@@ -81,9 +96,9 @@ class Application
         return this.id;
     }
 
-    addReview(review: string, user: User): void
+    addReview(review: string, userId: number): void
     {
-        this.reviews.push(new Review(user, review));
+        this.reviews.push(new Review(userId, review));
     }
 
     removeReview(index: number): void
@@ -102,12 +117,12 @@ class Application
 
 class Review
 {
-    private user: User; 
+    private userId: number; 
     private comment: string;
 
-    constructor(user: User, comment: string)
+    constructor(userId: number, comment: string)
     {
-        this.user = user;
+        this.userId = userId;
         this.comment = comment;
     }
 }
@@ -124,21 +139,87 @@ class User
         this.username = username;
         this.email = email;
     }
+
+    getUserId(): number
+    {
+        return this.userId;
+    }
 }
 
-// Test data loading data and adding some applications
-const library = new Library();
+const RawUserSchema = z.object({
+    userId: z.number(),
+    username: z.string(),
+    email: z.string()
+});
+
+const RawReviewSchema = z.object({
+    userId: z.number(),
+    comment: z.string()
+});
+
+const RawApplicationSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string(),
+    downloads: z.number(),
+    upvotes: z.number(),
+    reviews: z.array(RawReviewSchema)
+});
+
+const DataSchema = z.object({
+    users: z.array(RawUserSchema),
+    applications: z.array(RawApplicationSchema)
+}).transform((data) => {
+    const database = new Data();
+
+    data.users.forEach(u => {
+        database.addUser(u.userId, u.username, u.email);
+    });
+
+    data.applications.forEach(appData => {
+        database.addApplication(
+            appData.id, 
+            appData.name, 
+            appData.description
+        );
+        const app = database.getApplicationById(appData.id);
+
+        if (app)
+        {
+            appData.reviews.forEach(revData => {
+                const userRef = database.getUserById(revData.userId);
+                if (userRef) {
+                    app.addReview(revData.comment, userRef.getUserId());
+                } else {
+                    console.warn(`Orphaned review: User ${revData.userId} not found.`);
+                }
+            });
+        }
+    });
+    return database;
+});
+
 
 (async () => {
-    await library.loadFromFile();
-    library.addApplication(1, 'App One', 'Description for App One');
-    library.addApplication(2, 'App Two', 'Description for App Two');
-    library.getApplicationById(1)?.addReview('Great app!', new User(1, 'UserOne', 'userone@example.com'));
-    library.addApplication(3, 'App Three', 'Description for App Three');
-    library.addApplication(4, 'App Four', 'Description for App Four');
-    await library.writeToFile();
-    console.dir(library, { depth: null });
-    library.getApplicationById(1)?.removeReview(0);
-    library.removeApplication(3);
-    library.removeApplication(4);
+    // Test data loading data and adding some applications
+    let database: Data; 
+    try {
+        const rawData = await WriteUtils.loadFromJsonFile();
+        database = DataSchema.parse(rawData);
+    } catch (error) {
+        console.log("Failed to load existing data, creating a new database instance.");
+        database = new Data();
+    }
+
+    // Test adding some data
+    database.addApplication(1, 'App One', 'Description for App One');
+    database.addApplication(2, 'App Two', 'Description for App Two');
+    database.addApplication(3, 'App Three', 'Description for App Three');
+    database.addApplication(4, 'App Four', 'Description for App Four');
+    database.addUser(1, 'UserOne', 'userone@example.com');
+    database.getApplicationById(1)?.addReview('Great app!', 1);
+
+    // Write the updated data back to the file
+    await WriteUtils.saveToJsonFile(database);
+    //console.dir(database, { depth: null });
 })();
