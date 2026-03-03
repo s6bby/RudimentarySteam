@@ -2,16 +2,36 @@ import math
 import pygame
 #Basic game loop template used from pygame documentation: https://www.pygame.org
 
+themes = {
+    "Default": {
+        "background": "black",
+        "player": "white",
+        "enemy": "red",
+        "bullet": "yellow"
+    },
+    "Dark": {
+        "background": (30, 30, 30),
+        "player": (200, 200, 200),
+        "enemy": (255, 100, 100),
+        "bullet": (255, 255, 100)
+    },
+    "Light": {
+        "background": (220, 220, 220),
+        "player": (50, 50, 50),
+        "enemy": (255, 150, 150),
+        "bullet": (255, 255, 150)
+    }
+}
+
 class Player:
     def __init__(self,xpos,ypos):
-        self.xpos = xpos
-        self.ypos = ypos
+        self.position = pygame.Vector2(xpos, ypos)
         self.speed = 100
         self.health = 100
-        self.collider = pygame.Rect(self.xpos-70, self.ypos-70, 140, 140)
         self.bullets = []
         self.shootTimer = 0
         self.settings = settings
+        self.color = settings.theme["player"]
     def update(self):       
         self.move()
         self.checkCollisions()
@@ -22,8 +42,7 @@ class Player:
         self.shootTimer += dt
         if keysPressed[pygame.K_SPACE] and self.shootTimer >= 0.25:
             self.shootTimer = 0
-            mouseX, mouseY = pygame.mouse.get_pos()
-            self.bullets.append(Bullet(self.xpos, self.ypos, mouseX, mouseY))
+            self.bullets.append(Bullet(self.position, pygame.mouse.get_pos()))
         for bullet in self.bullets[:]:
             if not bullet.update():
                 self.bullets.remove(bullet)
@@ -32,41 +51,32 @@ class Player:
     def checkCollisions(self):
         pass        #TODO
     def move(self):
-        x=0
-        y=0
+        velocity = pygame.Vector2(0, 0)
         keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_w]:
-            y-=1
+            velocity.y -= 1
         if keysPressed[pygame.K_s]:
-            y+=1
+            velocity.y += 1
         if keysPressed[pygame.K_a]:
-            x-=1
+            velocity.x -= 1
         if keysPressed[pygame.K_d]:
-            x+=1
-        length = math.sqrt(x**2+y**2)   
-        #Normalize the vector to account for diagonal speed increase TODO: Move this logic into a vector2
-        if length != 0:     
-            x /= length
-            y /= length
-            self.xpos += x*self.speed*dt
-            self.ypos += y*self.speed*dt
+            velocity.x += 1
+        #Normalize the vector to account for diagonal speed increase
+        if velocity.magnitude() != 0:    
+            velocity.normalize_ip() 
+            self.position += velocity * self.speed * dt
     def draw(self):
-        if self.settings.theme == "Default":
-            pygame.draw.circle(screen, "blue", (self.xpos, self.ypos), 70)
-        elif self.settings.theme == "Dark":
-            pygame.draw.circle(screen, "cyan", (self.xpos, self.ypos), 70)
-        elif self.settings.theme == "Light":
-            pygame.draw.circle(screen, "navy", (self.xpos, self.ypos), 70)
+        pygame.draw.circle(screen, self.color, self.position, 70)
+        
 
 class Enemy:
     def __init__(self, xpos, ypos):
-        self.xpos = xpos
-        self.ypos = ypos
-    def update(self, targetX, targetY):
+        self.position = pygame.Vector2(xpos, ypos)
+    def update(self, targetposition):
         pass
     def draw(self):
         pass
-    def path(self, targetX, targetY):
+    def path(self, targetposition):
         pass
 
 class Glob(Enemy):
@@ -75,53 +85,43 @@ class Glob(Enemy):
         self.speed = 30
         self.bullets = []
         self.shootTimer = 0
-    def update(self, targetX, targetY):
-        self.path(targetX, targetY)
+    def update(self, targetposition):
+        self.path(targetposition)
         self.draw()
         self.shootTimer += dt
         if self.shootTimer >= 1:
             self.shootTimer = 0
-            self.bullets.append(self.shoot(targetX, targetY))
+            self.bullets.append(self.shoot(targetposition))
         for bullet in self.bullets[:]:
             if not bullet.update():
                 self.bullets.remove(bullet)
             else:
                 bullet.draw()
     def draw(self):
-        pygame.draw.circle(screen, "red", (self.xpos, self.ypos), 50)
-    def path(self,targetX, targetY):
-        x=targetX - self.xpos
-        y=targetY - self.ypos
-        length = math.sqrt(x**2+y**2)
-        if length != 0:
-            x /= length
-            y /= length
-            self.xpos += x*self.speed*dt
-            self.ypos += y*self.speed*dt
-    def shoot(self, targetX, targetY):
-        return Bullet(self.xpos, self.ypos, targetX, targetY)
+        pygame.draw.circle(screen, "red", self.position, 50)
+    def path(self,targetposition):
+        length = targetposition - self.position
+        if length.magnitude() != 0:
+            length.normalize_ip()
+            self.position += length * self.speed * dt
+    def shoot(self, targetposition):
+        return Bullet(self.position, targetposition)
 
 class Bullet:
-    def __init__(self, xpos, ypos, targetX, targetY):
-        self.xpos = xpos
-        self.ypos = ypos
+    def __init__(self, position, targetposition):
+        self.position = pygame.Vector2(position)
         self.speed = 200
-        x=targetX - self.xpos
-        y=targetY - self.ypos
-        length = math.sqrt(x**2+y**2)
-        if length != 0:
-            x /= length
-            y /= length
-            self.xVel = x*self.speed
-            self.yVel = y*self.speed
+        travelVector = pygame.Vector2(targetposition - self.position)
+        if travelVector.magnitude() != 0:
+            travelVector.normalize_ip()
+            self.velocity = pygame.Vector2(travelVector * self.speed)
     def update(self):
-        self.xpos += self.xVel*dt
-        self.ypos += self.yVel*dt
-        if self.xpos > screen.get_width() or self.xpos < 0 or self.ypos > screen.get_height() or self.ypos < 0:
+        self.position += self.velocity * dt
+        if self.position.x > screen.get_width() or self.position.x < 0 or self.position.y > screen.get_height() or self.position.y < 0:
             return False
         return True
     def draw(self):
-        pygame.draw.circle(screen, "yellow", (self.xpos, self.ypos), 10)
+        pygame.draw.circle(screen, settings.theme["bullet"], self.position, 10)
 
 class Scene:
     def __init__(self):
@@ -193,7 +193,7 @@ class PlayScene(Scene):
     def update(self):
         screen.fill("black")
         self.player.update()
-        self.glob.update(self.player.xpos, self.player.ypos)
+        self.glob.update(self.player.position)
         self.fpsCounter.draw()
         return self
 
@@ -219,15 +219,15 @@ class SettingsScene(Scene):
             elif settings.difficulty == "Normal":
                 settings.difficulty = "Hard"
         elif keysPressed[pygame.K_1] and settings.unlockedThemes["Default"]:
-            settings.theme = "Default"
+            settings.theme = themes["Default"]
         elif keysPressed[pygame.K_2] and settings.unlockedThemes["Dark"]:
-            settings.theme = "Dark"
+            settings.theme = themes["Dark"]
         elif keysPressed[pygame.K_3] and settings.unlockedThemes["Light"]:
-            settings.theme = "Light"
+            settings.theme = themes["Light"]
         self.draw()
         return self
     def draw(self):
-        screen.fill("black")
+        screen.fill(settings.theme["background"])
         font = pygame.font.SysFont(None, 48)
         text = font.render("Settings", True, "white")
         screen.blit(text, (50, 50))
@@ -272,7 +272,7 @@ class Settings:
     def __init__(self):
         self.volume = 1.0
         self.difficulty = "Normal"
-        self.theme = "Default"
+        self.theme = themes["Default"]
         self.unlockedThemes = {"Default": True, "Dark": False, "Light": False}
     
     
