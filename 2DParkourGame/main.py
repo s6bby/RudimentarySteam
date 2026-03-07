@@ -41,6 +41,35 @@ class Scene:
     def update(self, dt): pass
     def draw(self, screen): pass
 
+class Spike:
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+
+    def draw(self, screen, camera_x):
+        pygame.draw.polygon(
+            screen,
+            colors["red"],
+            [
+                (self.rect.x - camera_x, self.rect.bottom),
+                (self.rect.centerx - camera_x, self.rect.top),
+                (self.rect.right - camera_x, self.rect.bottom)
+            ]
+        )
+class Projectile:
+    def __init__(self, x, y, direction):
+        self.rect = pygame.Rect(x, y, 10, 10)
+        self.speed = 500
+        self.direction = direction
+
+    def update(self, dt):
+        self.rect.x += self.speed * self.direction * dt
+
+    def draw(self, screen, camera_x):
+        pygame.draw.rect(
+            screen,
+            colors["green"],
+            (self.rect.x - camera_x, self.rect.y, 10, 10)
+        )
 class Platform:
     def __init__(self, rect, moving=False, move_range=0, speed=0):
         self.rect = pygame.Rect(rect)
@@ -101,6 +130,12 @@ class GameScene(Scene):
             Platform((1500, h - 300, 250, 20), moving=True, move_range=200, speed=150),
         ]
 
+        self.spikes = [
+            Spike((500, h - 120, 40, 20)),
+            Spike((540, h - 120, 40, 20)),
+            Spike((580, h - 120, 40, 20))
+        ]
+
         self.enemies = [
             {"rect": pygame.Rect(600, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
             {"rect": pygame.Rect(1200, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
@@ -120,6 +155,14 @@ class GameScene(Scene):
 
         self.level_end = pygame.Rect(2000, h - 200, 100, 100)
 
+        self.shooters = [
+            {
+                "rect": pygame.Rect(1700, h - 150, 50, 50),
+                "cooldown": 0
+            }
+        ]
+
+        self.projectiles = []
     def move_and_collide(self, rect, velocity, dt):
         previous_rect = rect.copy()
 
@@ -197,6 +240,37 @@ class GameScene(Scene):
         if self.player.colliderect(self.level_end):
             self.game.change_scene(LevelCompletionScene(self.game))
 
+        for shooter in self.shooters:
+            rect = shooter["rect"]
+
+            shooter["cooldown"] -= dt
+            if shooter["cooldown"] <= 0:
+                direction = -1 if self.player.centerx < rect.centerx else 1
+                self.projectiles.append(
+                    Projectile(rect.centerx, rect.centery, direction)
+                )
+                shooter["cooldown"] = 2
+
+            if rect.colliderect(self.player):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+
+        for projectile in self.projectiles[:]:
+            projectile.update(dt)
+
+            if projectile.rect.colliderect(self.player):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+                self.projectiles.remove(projectile)
+
+            if projectile.rect.x < 0 or projectile.rect.x > 3000:
+                self.projectiles.remove(projectile)
+
+        for spike in self.spikes:
+            if self.player.colliderect(spike.rect):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+
     def draw(self, screen):
         screen.fill(colors["sky"])
 
@@ -246,7 +320,21 @@ class GameScene(Scene):
              100,
              100)
         )
+        for spike in self.spikes:
+            spike.draw(screen, self.camera_x)
 
+        for shooter in self.shooters:
+            pygame.draw.rect(
+                screen,
+                colors["green"],
+                (shooter["rect"].x - self.camera_x,
+                 shooter["rect"].y,
+                 50,
+                 50)
+            )
+
+        for projectile in self.projectiles:
+            projectile.draw(screen, self.camera_x)
 class LevelCompletionScene(Scene):
     def __init__(self, game):
         super().__init__(game)
