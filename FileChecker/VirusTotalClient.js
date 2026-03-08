@@ -10,7 +10,7 @@ const { setTimeout: sleep } = require('timers/promises');
 const path = require('path');
 
 const API_KEY = process.env.API_KEY;
-const FILE_PATH = './filepath';
+const FILE_PATH = '../../Database_System_Concepts.pdf';
 
 virustotal.auth(API_KEY);
 
@@ -119,31 +119,35 @@ async function pollForResults(analysisId) {
 }
 
 /* Main Execution Block */
-(async () => {
-    try {
-        // make sure API_KEY exists
-        if (!API_KEY) throw new Error("API_KEY is missing from .env file");
+if (require.main === module) {
+    (async () => {
+        try {
+            // make sure API_KEY exists
+            if (!API_KEY) throw new Error("API_KEY is missing from .env file");
 
-        // make sure file exists
-        const stats = await fs.stat(FILE_PATH);
-        const fileSizeMB = stats.size / (1024 * 1024);
+            // make sure file exists
+            const stats = await fs.stat(FILE_PATH);
+            const fileSizeMB = stats.size / (1024 * 1024);
 
-        console.log(`File: ${path.basename(FILE_PATH)} (${fileSizeMB.toFixed(2)} MB)`);
+            console.log(`File: ${path.basename(FILE_PATH)} (${fileSizeMB.toFixed(2)} MB)`);
 
-        // routing logic based on VirusTotal's API limits
-        if (fileSizeMB < 32) {
-            console.log('Small File: Using Standard Upload');
-            await scanSmallFile();
-        } 
-        else if (fileSizeMB < 650) {
-            console.log('Large File: Using Upload URL');
-            await scanLargeFile(); 
-        } 
-        else {
-            console.log('Very Large File: Manual Inspection is required...');
+            // routing logic based on VirusTotal's API limits
+            if (fileSizeMB < 32) {
+                console.log('Small File: Using Standard Upload');
+                await scanSmallFile();
+            } 
+            else if (fileSizeMB < 650) {
+                console.log('Large File: Using Upload URL');
+                await scanLargeFile(); 
+            } 
+            else {
+                console.log('Very Large File: Manual Inspection is required...');
+            }
+
+        } catch (err) {
+            console.error('Execution Error:', err.message);
         }
+    })();
+}
 
-    } catch (err) {
-        console.error('Execution Error:', err.message);
-    }
-})();
+module.exports = { getUploadUrl, pollForResults, uploadFileWithProgress, scanLargeFile };
