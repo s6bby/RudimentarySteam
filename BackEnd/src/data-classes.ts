@@ -183,43 +183,12 @@ const DataSchema = z.object({
             appData.description
         );
         const app = database.getApplicationById(appData.id);
-
         if (app)
         {
             appData.reviews.forEach(revData => {
-                const userRef = database.getUserById(revData.userId);
-                if (userRef) {
-                    app.addReview(revData.comment, userRef.getUserId());
-                } else {
-                    console.warn(`Orphaned review: User ${revData.userId} not found.`);
-                }
+                    app.addReview(revData.comment, revData.userId);
             });
         }
     });
     return database;
 });
-
-
-(async () => {
-    // Test data loading data and adding some applications
-    let database: Data; 
-    try {
-        const rawData = await WriteUtils.loadFromJsonFile();
-        database = DataSchema.parse(rawData);
-    } catch (error) {
-        console.log("Failed to load existing data, creating a new database instance.");
-        database = new Data();
-    }
-
-    // Test adding some data
-    database.addApplication(1, 'App One', 'Description for App One');
-    database.addApplication(2, 'App Two', 'Description for App Two');
-    database.addApplication(3, 'App Three', 'Description for App Three');
-    database.addApplication(4, 'App Four', 'Description for App Four');
-    database.addUser(1, 'UserOne', 'userone@example.com');
-    database.getApplicationById(1)?.addReview('Great app!', 1);
-
-    // Write the updated data back to the file
-    await WriteUtils.saveToJsonFile(database);
-    //console.dir(database, { depth: null });
-})();
