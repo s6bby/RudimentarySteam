@@ -15,6 +15,11 @@ class Ball:
         self.rect.x += self.velocity.x  
         self.rect.y += self.velocity.y 
 
+
+    def update(self):
+        self.rect.x += self.velocity.x
+        self.rect.y += self.velocity.y
+    
   
     def reflect(self, normal):
         self.velocity.reflect_ip(normal) #  the normal tells the ball what direction the surface is facing, and reflect_ip() uses that nromal to calculate the newa reflected velocity. 
@@ -24,13 +29,16 @@ class Ball:
 
         if self.rect.top <= 0 or self.rect.bottom >= screen_height:
             self.velocity.y *= -1 
-            hit_wall = True
+        #    hit_wall = True
 
-        if self.rect.left <= 0 or self.rect.right >= screen_width: 
-            self.velocity.x *= -1
-            hit_wall = True
+        if self.rect.left <= 0:
+            return "opponent"
 
-        return hit_wall 
+        if self.rect.right >= screen_width:
+            return "player"
+
+        return None
+       # return hit_wall 
 
     def draw(self, screen):
         pygame.draw.rect(screen, (123, 0, 0), self.rect, 2) # debug hitbox 

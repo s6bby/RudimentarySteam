@@ -17,13 +17,23 @@ class Game:
 
         self.ball = Ball(self.width, self.height)
 
-        self.player = Paddle(x=30, screen_height = self.height) # controls the x posiiton, 
-        self.opponent = Paddle(x=self.width - 30 - 15, screen_height =  self.height) # did have help with ai for determining how the spacing for the paddles should be, 
+        self.player = Paddle(30, self.height, "assets/newplayerPaddle.png")
 
+        self.opponent = Paddle(self.width - 128 - 30, self.height, "assets/newopponentPaddle.png") # did have help with ai for determining how the spacing for the paddles should be, 
 
+        self.playerScore = 0
+        self.opponentScore = 0
+
+        self.playerScore = 0
+        self.opponentScore = 0
+
+        print("Players moves with W and S")
+        print("Opponent moves with arrow up and arrow down")
+
+        
     def gameReset(self): 
         self.ball.rect.center = (self.width // 2, self.height // 2)
-        self.ball.velocity = pygame.Vector2(2, 0)
+        self.ball.velocity = pygame.Vector2(6, 0)
 
         self.player.rect.centery = self.height // 2
         self.opponent.rect.centery = self.height // 2
@@ -44,19 +54,38 @@ class Game:
             if keys[pygame.K_BACKSPACE]: 
                 self.gameReset()
 
-            if keys[pygame.K_w] or keys[pygame.K_UP]:
+            if keys[pygame.K_w]:
                 self.player.rect.y -= paddle_speed
 
-            if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+            if keys[pygame.K_s]:
                 self.player.rect.y += paddle_speed
 
-            # keep paddle on screen
+            
+            # TEMP opponent controls 
+
+            if keys[pygame.K_UP]:
+                self.opponent.rect.y -= paddle_speed
+
+            if keys[pygame.K_DOWN]:
+                self.opponent.rect.y += paddle_speed
+
+
+            # keep playerPaddle on screen
             if self.player.rect.top < 0:
                 self.player.rect.top = 0
 
                 
             if self.player.rect.bottom > self.height:
                 self.player.rect.bottom = self.height
+
+
+            # keep opponentPaddle on screen
+            if self.opponent.rect.top < 0:
+                self.opponent.rect.top = 0
+
+            if self.opponent.rect.bottom > self.height:
+                self.opponent.rect.bottom = self.height
+
 
             self.screen.fill((0, 0, 0))
             
@@ -84,14 +113,31 @@ class Game:
                     self.ball.velocity = pygame.Vector2(5, 0)
 
 
+            offset = (
+                self.ball.rect.left - self.opponent.rect.left,
+                self.ball.rect.top - self.opponent.rect.top
+            )
 
-            if self.ball.rect.colliderect(self.opponent.rect):
+            if self.opponent.mask.overlap(ball_mask, offset) and self.ball.velocity.x > 0:
                 self.ball.reflect(pygame.Vector2(-1, 0))
+        
 
-            if self.ball.checkCollisions(self.width, self.height):
-                print("Wall hit")
 
-                # scoring needs to be here.
+            collision = self.ball.checkCollisions(self.width, self.height)
+
+            if collision == "player":
+                self.playerScore += 1
+                print("Player scored!")
+                print("Score:", self.playerScore, "-", self.opponentScore)
+                self.gameReset()
+
+            elif collision == "opponent":
+                self.opponentScore += 1
+                print("Opponent scored!")
+                print("Score:", self.playerScore, "-", self.opponentScore)
+                self.gameReset()
+
+            
 
             self.ball.draw(self.screen)
             self.player.draw(self.screen)
