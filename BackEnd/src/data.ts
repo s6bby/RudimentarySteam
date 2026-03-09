@@ -1,7 +1,9 @@
 import * as WriteUtils from './json-manipulation';
 import { z } from "zod";
+import { Application, RawApplicationSchema } from "./application";
+import { User, RawUserSchema } from "./user";
 
-class Data
+export class Data
 {
     private applications: Map<number, Application> = new Map<number, Application>();
     private users: Map<number, User> = new Map<number, User>();
@@ -71,100 +73,6 @@ class Data
         };
     }
 }
-
-class Application
-{
-    private id: number;
-    private name: string;
-    private description: string;
-    private downloads: number;
-    private upvotes: number;
-    private reviews: Review[];
-    
-    constructor(id: number, name: string, description: string, downloads: number = 0, upvotes: number = 0, reviews: Review[] = [])
-    {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.downloads = downloads;
-        this.upvotes = upvotes;
-        this.reviews = reviews;
-    }
-
-    getId(): number
-    {
-        return this.id;
-    }
-
-    addReview(review: string, userId: number): void
-    {
-        this.reviews.push(new Review(userId, review));
-    }
-
-    removeReview(index: number): void
-    {
-        if (index >= 0 && index < this.reviews.length)
-        {
-            this.reviews.splice(index, 1);
-        }
-    }
-
-    upvote(): void
-    {
-        this.upvotes++;
-    }
-}
-
-class Review
-{
-    private userId: number; 
-    private comment: string;
-
-    constructor(userId: number, comment: string)
-    {
-        this.userId = userId;
-        this.comment = comment;
-    }
-}
-
-class User
-{
-    private userId: number;
-    private username: string;
-    private email: string;
-
-    constructor(userId: number, username: string, email: string)
-    {
-        this.userId = userId;
-        this.username = username;
-        this.email = email;
-    }
-
-    getUserId(): number
-    {
-        return this.userId;
-    }
-}
-
-const RawUserSchema = z.object({
-    userId: z.number(),
-    username: z.string(),
-    email: z.string()
-});
-
-const RawReviewSchema = z.object({
-    userId: z.number(),
-    comment: z.string()
-});
-
-const RawApplicationSchema = z.object({
-    id: z.number(),
-    name: z.string(),
-    description: z.string(),
-    downloads: z.number(),
-    upvotes: z.number(),
-    reviews: z.array(RawReviewSchema)
-});
 
 const DataSchema = z.object({
     users: z.array(RawUserSchema),
