@@ -382,3 +382,21 @@ window.addEventListener("resize", () => {
 initTheme(); // (NEW) set theme before showing UI
 boot();
 applySearch();
+
+export {
+  LISTINGS,
+  needEl,
+  escapeHtml,
+  applyTheme,
+  initTheme,
+  setDrawerOpen,
+  renderDrawer,
+  renderListings,
+  applySearch,
+  boot,
+  setMobileMenuOpen,
+  renderPage,
+  handleNavAction,
+};
+
+export type { Listing };
