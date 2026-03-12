@@ -1,7 +1,4 @@
 import { User } from "../src/user";
-import { Application } from "../src/application";
-import { Review } from "../src/review";
-import { Data } from "../src/data";
 
 describe ("User Tests", () => {
     test("Create User", () => {
@@ -15,16 +12,4 @@ describe ("User Tests", () => {
         user.updateEmail("newemail@example.com");
         expect(user.getEmail()).toBe("newemail@example.com");
     });
-});
-
-describe ("Application Tests", () => {
-    
-});
-
-describe ("Review Tests", () => {
-
-});
-
-describe ("Data Tests", () => {
-
 });
