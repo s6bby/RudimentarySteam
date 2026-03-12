@@ -10,6 +10,16 @@ export class Review
         this.userId = userId;
         this.comment = comment;
     }
+
+    getUserId(): number
+    {
+        return this.userId;
+    }
+
+    getComment(): string
+    {
+        return this.comment;
+    }
 }
 
 export const RawReviewSchema = z.object({

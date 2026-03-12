@@ -25,6 +25,31 @@ export class Application
         return this.id;
     }
 
+    getName(): string
+    {
+        return this.name;
+    }
+
+    getDescription(): string
+    {
+        return this.description;
+    }
+
+    getUpvotes(): number
+    {
+        return this.upvotes;
+    }
+
+    getDownloads(): number
+    {
+        return this.downloads;
+    }
+
+    getReviews(): Review[]
+    {
+        return this.reviews;
+    }
+
     addReview(review: string, userId: number): void
     {
         this.reviews.push(new Review(userId, review));

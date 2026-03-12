@@ -13,7 +13,7 @@ export class Data
         await WriteUtils.saveToJsonFile(this, filePath);
     }
 
-    addApplication(id: number, name: string, description: string): void
+    addApplication(id: number, name: string, description: string): Application | undefined
     {
         const application = new Application(id, name, description);
         if (this.applications.has(application.getId()))
@@ -22,11 +22,12 @@ export class Data
             return;
         }
         this.applications.set(application.getId(), application);
+        return application;
     }
 
-    removeApplication(id: number): void
+    removeApplication(id: number): boolean
     {
-        this.applications.delete(id);
+        return this.applications.delete(id);
     }
 
     getApplicationById(id: number): Application | undefined
@@ -39,7 +40,7 @@ export class Data
         return Array.from(this.applications.values());
     }
     
-    addUser(userId: number, username: string, email: string): void
+    addUser(userId: number, username: string, email: string): User | undefined
     {
         const user = new User(userId, username, email);
         if (this.users.has(user.getUserId()))
@@ -48,11 +49,12 @@ export class Data
             return;
         }
         this.users.set(user.getUserId(), user);
+        return user;
     }
 
-    removeUser(userId: number): void
+    removeUser(userId: number): boolean
     {
-        this.users.delete(userId);
+        return this.users.delete(userId);
     }
 
     getUserById(userId: number): User | undefined
