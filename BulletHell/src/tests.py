@@ -6,10 +6,7 @@ import game
 class TestGame(unittest.TestCase):
 
     def setUp(self):
-        """
-        Set up the global variables that the classes in main.py rely on.
-        We mock the screen so we don't need to actually open a Pygame window.
-        """
+        #Mock globals
         game.screen = MagicMock()
         game.screen.get_width.return_value = 1920
         game.screen.get_height.return_value = 1080
@@ -51,52 +48,45 @@ class TestGame(unittest.TestCase):
         glob = game.Glob(100, 100)
         glob.speed = 30
         
-        # Branch 1: magnitude == 0 (target is the exact same as current position)
+        # Branch 1: magnitude == 0 
         target_same = pygame.Vector2(100, 100)
         glob.path(target_same)
         
-        # Assert 8: Position should remain unchanged because the if-statement is skipped
+        # Position should remain unchanged
         self.assertEqual(glob.position, pygame.Vector2(100, 100))
         
-        # Branch 2: magnitude != 0 (target is different)
+        # Branch 2: magnitude != 0
         target_diff = pygame.Vector2(100, 200) # Target is directly below
         glob.path(target_diff)
-        # Normalization of (0, 100) is (0, 1). 
-        # Movement = speed * dt = 30 * 0.5 = 15.
-        # New position should be (100, 115).
         
-        # Assert 9: Position x remains 100
+        # x remains 100
         self.assertEqual(glob.position.x, 100)
         
-        # Assert 10: Position y moved by exactly 15
+        # y moved by 15
         self.assertEqual(glob.position.y, 115)
 
-    # ---------------------------------------------------------
-    # INTEGRATION TEST
-    # ---------------------------------------------------------
+# INTEGRATION TEST
     def test_glob_shoot_integration(self):
-        """
-        INTEGRATION TEST
-        Units being tested: Glob class and Bullet class.
-        Testing that Glob correctly instantiates a Bullet with the proper relational parameters.
-        """
+        #Testing Glob and Bullet class
+        """def path(self,targetposition):
+        length = targetposition - self.position
+        if length.magnitude() != 0:
+            length.normalize_ip()
+            self.position += length * self.speed * dt"""
         glob = game.Glob(500, 500)
         target = pygame.Vector2(500, 0) # Target is straight up
         
-        # Exercise the units
         bullet = glob.shoot(target)
         
-        # Assert 11: shoot() successfully creates an instance of the Bullet unit
+        #shoot() successfully creates an instance of the Bullet unit
         self.assertIsInstance(bullet, game.Bullet)
         
-        # Assert 12: The bullet's starting position is successfully inherited from the Glob's position
+        # The bullet's starting position is successfully inherited from the Glob's position
         self.assertEqual(bullet.position, pygame.Vector2(500, 500))
         
-        # Assert 13: The bullet's velocity is calculated correctly based on Glob's target
-        # Target is up (0, -500). Normalized direction is (0, -1). 
-        # Bullet speed is 200. Velocity should be (0, -200).
+        # Bullet's velocity is calculated correctly based on Glob's target
         self.assertEqual(bullet.velocity, pygame.Vector2(0, -200))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
