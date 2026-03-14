@@ -37,15 +37,55 @@ class Button:
 class Scene:
     def __init__(self, game):
         self.game = game
+    def handle_event(self, event): pass
+    def update(self, dt): pass
+    def draw(self, screen): pass
 
-    def handle_event(self, event):
-        pass
+class Spike:
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+
+    def draw(self, screen, camera_x):
+        pygame.draw.polygon(
+            screen,
+            colors["red"],
+            [
+                (self.rect.x - camera_x, self.rect.bottom),
+                (self.rect.centerx - camera_x, self.rect.top),
+                (self.rect.right - camera_x, self.rect.bottom)
+            ]
+        )
+
+class Projectile:
+    def __init__(self, x, y, direction):
+        self.rect = pygame.Rect(x, y, 10, 10)
+        self.speed = 500
+        self.direction = direction
 
     def update(self, dt):
-        pass
+        self.rect.x += self.speed * self.direction * dt
 
-    def draw(self, screen):
-        pass
+    def draw(self, screen, camera_x):
+        pygame.draw.rect(
+            screen,
+            colors["green"],
+            (self.rect.x - camera_x, self.rect.y, 10, 10)
+        )
+
+class Platform:
+    def __init__(self, rect, moving=False, move_range=0, speed=0):
+        self.rect = pygame.Rect(rect)
+        self.start_x = self.rect.x
+        self.moving = moving
+        self.move_range = move_range
+        self.speed = speed
+        self.direction = 1
+
+    def update(self, dt):
+        if self.moving:
+            self.rect.x += self.speed * self.direction * dt
+            if abs(self.rect.x - self.start_x) >= self.move_range:
+                self.direction *= -1
 
 class MenuScene(Scene):
     def __init__(self, game):
@@ -69,10 +109,21 @@ class MenuScene(Scene):
         screen.fill(colors["black"])
         self.play_button.draw(screen)
 
+class PowerUp:
+    def __init__(self, rect, color=(255, 255, 0)):
+        self.rect = pygame.Rect(rect)
+        self.color = color
+
+    def draw(self, screen, camera_x):
+        pygame.draw.rect(
+            screen,
+            self.color,
+            (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height)
+        )
+
 class GameScene(Scene):
     def __init__(self, game):
         super().__init__(game)
-
         w, h = self.game.screen.get_size()
 
         self.player = pygame.Rect(100, h - 150, 50, 50)
@@ -83,23 +134,94 @@ class GameScene(Scene):
         self.jump_strength = -700
         self.on_ground = False
 
-        self.ground = pygame.Rect(0, h - 100, w * 3, 100)
-
         self.camera_x = 0
 
+        self.platforms = [
+            Platform((0, h - 100, w * 3, 100)),
+            Platform((400, h - 250, 200, 20)),
+            Platform((750, h - 350, 200, 20)),
+            Platform((1100, h - 220, 200, 20)),
+            Platform((1500, h - 300, 250, 20), moving=True, move_range=200, speed=150),
+        ]
+
+        self.spikes = [
+            Spike((500, h - 120, 40, 20)),
+            Spike((540, h - 120, 40, 20)),
+            Spike((580, h - 120, 40, 20))
+        ]
+
         self.enemies = [
+            {"rect": pygame.Rect(600, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
+            {"rect": pygame.Rect(1200, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
+        ]
+
+        middle_platform = self.platforms[2].rect
+        self.jumping_enemy = {
+            "rect": pygame.Rect(
+                middle_platform.centerx - 25,
+                middle_platform.top - 50,
+                50,
+                50
+            ),
+            "vel": pygame.Vector2(0, 0),
+            "jump_strength": -600
+        }
+
+        self.level_end = pygame.Rect(2000, h - 200, 100, 100)
+
+        self.shooters = [
             {
-                "rect": pygame.Rect(600, h - 150, 50, 50),
-                "dir": 1
-            },
-            {
-                "rect": pygame.Rect(1000, h - 150, 50, 50),
-                "dir": -1
+                "rect": pygame.Rect(1700, h - 150, 50, 50),
+                "cooldown": 0
             }
         ]
 
+        self.projectiles = []
+
+        self.powerups = [PowerUp((900, h - 170, 30, 30))]
+        self.has_double_jump = False
+        self.double_jump_used = False
+
+    def move_and_collide(self, rect, velocity, dt):
+        previous_rect = rect.copy()
+
+        rect.x += velocity.x * dt
+        for platform in self.platforms:
+            if rect.colliderect(platform.rect):
+                if velocity.x > 0:
+                    rect.right = platform.rect.left
+                elif velocity.x < 0:
+                    rect.left = platform.rect.right
+
+        rect.y += velocity.y * dt
+        grounded = False
+
+        for platform in self.platforms:
+            if rect.colliderect(platform.rect):
+                if velocity.y > 0 and previous_rect.bottom <= platform.rect.top:
+                    rect.bottom = platform.rect.top
+                    velocity.y = 0
+                    grounded = True
+                elif velocity.y < 0 and previous_rect.top >= platform.rect.bottom:
+                    rect.top = platform.rect.bottom
+                    velocity.y = 0
+
+        return grounded
+
+    def try_jump(self):
+        if self.on_ground:
+            self.player_vel.y = self.jump_strength
+            self.double_jump_used = False
+            return True
+        elif self.has_double_jump and not self.double_jump_used:
+            self.player_vel.y = self.jump_strength
+            self.double_jump_used = True
+            return True
+        return False
+
     def handle_event(self, event):
-        pass
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            self.try_jump()
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -110,67 +232,210 @@ class GameScene(Scene):
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.player_vel.x = self.move_speed
 
-        if (keys[pygame.K_SPACE]) and self.on_ground:
-            self.player_vel.y = self.jump_strength
-            self.on_ground = False
-
         self.player_vel.y += self.gravity * dt
 
-        self.player.x += self.player_vel.x * dt
-        self.player.y += self.player_vel.y * dt
+        for platform in self.platforms:
+            platform.update(dt)
 
-        if self.player.colliderect(self.ground):
-            self.player.bottom = self.ground.top
-            self.player_vel.y = 0
-            self.on_ground = True
+        self.on_ground = self.move_and_collide(self.player, self.player_vel, dt)
+
+        if self.on_ground:
+            self.double_jump_used = False
 
         self.camera_x = self.player.x - 300
 
+        for powerup in self.powerups[:]:
+            if self.player.colliderect(powerup.rect):
+                self.has_double_jump = True
+                self.powerups.remove(powerup)
+                print("Power-up collected! Double jump enabled!")
+
         for enemy in self.enemies:
-            enemy["rect"].x += 200 * enemy["dir"] * dt
+            rect = enemy["rect"]
+            vel = enemy["vel"]
 
-            if enemy["rect"].left < 400 or enemy["rect"].right > 1400:
-                enemy["dir"] *= -1
+            vel.x = -200 if self.player.centerx < rect.centerx else 200
+            vel.y += self.gravity * dt
 
-            if self.player.colliderect(enemy["rect"]):
+            self.move_and_collide(rect, vel, dt)
+
+            if rect.colliderect(self.player):
                 self.player.topleft = (100, self.game.screen.get_height() - 150)
                 self.player_vel = pygame.Vector2(0, 0)
+                self.has_double_jump = False
+                self.double_jump_used = False
+                print("Double jump lost!")
+
+        rect = self.jumping_enemy["rect"]
+        vel = self.jumping_enemy["vel"]
+
+        vel.x = 0
+        vel.y += self.gravity * dt
+
+        grounded = self.move_and_collide(rect, vel, dt)
+
+        if grounded:
+            vel.y = self.jumping_enemy["jump_strength"]
+
+        if rect.colliderect(self.player):
+            self.player.topleft = (100, self.game.screen.get_height() - 150)
+            self.player_vel = pygame.Vector2(0, 0)
+            self.has_double_jump = False
+            self.double_jump_used = False
+            print("Double jump lost!")
+
+        if self.player.colliderect(self.level_end):
+            self.game.change_scene(LevelCompletionScene(self.game))
+
+        for shooter in self.shooters:
+            rect = shooter["rect"]
+
+            shooter["cooldown"] -= dt
+            if shooter["cooldown"] <= 0:
+                direction = -1 if self.player.centerx < rect.centerx else 1
+                self.projectiles.append(
+                    Projectile(rect.centerx, rect.centery, direction)
+                )
+                shooter["cooldown"] = 2
+
+            if rect.colliderect(self.player):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+                self.has_double_jump = False
+                self.double_jump_used = False
+                print("Double jump lost!")
+
+        for projectile in self.projectiles[:]:
+            projectile.update(dt)
+
+            if projectile.rect.colliderect(self.player):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+                self.has_double_jump = False
+                self.double_jump_used = False
+                print("Double jump lost!")
+                self.projectiles.remove(projectile)
+            elif projectile.rect.x < 0 or projectile.rect.x > 3000:
+                self.projectiles.remove(projectile)
+
+        for spike in self.spikes:
+            if self.player.colliderect(spike.rect):
+                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player_vel = pygame.Vector2(0, 0)
+                self.has_double_jump = False
+                self.double_jump_used = False
+                print("Double jump lost!")
 
     def draw(self, screen):
         screen.fill(colors["sky"])
 
-        pygame.draw.rect(screen, colors["ground"],
-                         (self.ground.x - self.camera_x,
-                          self.ground.y,
-                          self.ground.width,
-                          self.ground.height))
+        for platform in self.platforms:
+            pygame.draw.rect(
+                screen,
+                colors["ground"],
+                (platform.rect.x - self.camera_x,
+                 platform.rect.y,
+                 platform.rect.width,
+                 platform.rect.height)
+            )
 
-        pygame.draw.rect(screen, colors["blue"],
-                         (self.player.x - self.camera_x,
-                          self.player.y,
-                          self.player.width,
-                          self.player.height))
+        pygame.draw.rect(
+            screen,
+            colors["blue"],
+            (self.player.x - self.camera_x,
+             self.player.y,
+             50,
+             50)
+        )
 
         for enemy in self.enemies:
-            pygame.draw.rect(screen, colors["red"],
-                             (enemy["rect"].x - self.camera_x,
-                              enemy["rect"].y,
-                              50,
-                              50))
+            pygame.draw.rect(
+                screen,
+                colors["red"],
+                (enemy["rect"].x - self.camera_x,
+                 enemy["rect"].y,
+                 50,
+                 50)
+            )
+
+        pygame.draw.rect(
+            screen,
+            (255, 0, 255),
+            (self.jumping_enemy["rect"].x - self.camera_x,
+             self.jumping_enemy["rect"].y,
+             50,
+             50)
+        )
+
+        pygame.draw.rect(
+            screen,
+            (255, 215, 0),
+            (self.level_end.x - self.camera_x,
+             self.level_end.y,
+             100,
+             100)
+        )
+
+        for spike in self.spikes:
+            spike.draw(screen, self.camera_x)
+
+        for shooter in self.shooters:
+            pygame.draw.rect(
+                screen,
+                colors["green"],
+                (shooter["rect"].x - self.camera_x,
+                 shooter["rect"].y,
+                 50,
+                 50)
+            )
+
+        for projectile in self.projectiles:
+            projectile.draw(screen, self.camera_x)
+
+        for powerup in self.powerups:
+            powerup.draw(screen, self.camera_x)
+
+        font = pygame.font.Font(None, 36)
+        if self.has_double_jump:
+            status = "Double Jump: READY" if not self.double_jump_used else "Double Jump: USED (land to refresh)"
+            color = (0, 255, 0) if not self.double_jump_used else (255, 255, 0)
+            text = font.render(status, True, color)
+            screen.blit(text, (10, 10))
 
 class LevelCompletionScene(Scene):
     def __init__(self, game):
         super().__init__(game)
+        w, h = self.game.screen.get_size()
+
+        self.font = pygame.font.Font(None, 80)
+
+        self.menu_button = Button(
+            (w//2 - 150, h//2 + 50, 300, 100),
+            "Back to Menu",
+            pygame.font.Font(None, 60),
+            colors["gray"],
+            colors["lightgray"]
+        )
+
+    def handle_event(self, event):
+        if self.menu_button.is_clicked(event):
+            self.game.change_scene(MenuScene(self.game))
+
+    def draw(self, screen):
+        screen.fill(colors["black"])
+
+        text = self.font.render("LEVEL COMPLETE!", True, colors["white"])
+        screen.blit(text, text.get_rect(center=(screen.get_width()//2, screen.get_height()//2 - 50)))
+
+        self.menu_button.draw(screen)
 
 class Game:
     def __init__(self, width=1280, height=720):
         pygame.init()
-
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("2D Side Scroller")
         self.clock = pygame.time.Clock()
         self.running = True
-
         self.current_scene = MenuScene(self)
 
     def change_scene(self, scene):
