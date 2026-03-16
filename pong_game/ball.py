@@ -6,7 +6,9 @@ class Ball:
         self.rect = pygame.Rect(0, 0, size, size) # hitbox for the ball 
         self.rect.center = (screen_width // 2, screen_height // 2) 
         self.color = (255, 255, 255) 
-        self.velocity = pygame.Vector2(5, 0) 
+
+        self.speed = 8
+        self.velocity = pygame.Vector2(self.speed, 0)
                                             
         self.image = pygame.image.load("assets/tempBall.png").convert_alpha()
         self.mask = pygame.mask.from_surface(self.image)
@@ -17,8 +19,12 @@ class Ball:
 
 
     def update(self):
+        self.prev_x = self.rect.x
+        self.prev_y = self.rect.y
+
         self.rect.x += self.velocity.x
         self.rect.y += self.velocity.y
+
     
   
     def reflect(self, normal):

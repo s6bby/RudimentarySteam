@@ -30,14 +30,24 @@ class Game:
         print("Players moves with W and S")
         print("Opponent moves with arrow up and arrow down")
 
+        self.font = pygame.font.Font(None, 50)  # default pygame font
+
         
     def gameReset(self): 
         self.ball.rect.center = (self.width // 2, self.height // 2)
-        self.ball.velocity = pygame.Vector2(6, 0)
+        self.ball.velocity = pygame.Vector2(self.ball.speed, 0)
 
         self.player.rect.centery = self.height // 2
         self.opponent.rect.centery = self.height // 2
     
+
+    def drawScore(self):
+        scoreText = self.font.render(
+            f"{self.playerScore}  {self.opponentScore}", True, (255,255,255)
+        )
+
+        self.screen.blit(scoreText, (self.width//2 - 50, 20))
+
 
     def run(self):
         while self.running:
@@ -48,7 +58,7 @@ class Game:
                     self.running = False
 
             keys = pygame.key.get_pressed()
-            paddle_speed = 6
+            paddle_speed = 9
 
             # for game reset
             if keys[pygame.K_BACKSPACE]: 
@@ -96,9 +106,15 @@ class Game:
                 self.ball.rect.top - self.player.rect.top
             )
 
-            ball_mask = pygame.mask.Mask(self.ball.rect.size, fill=True)
+            ball_mask = self.ball.mask
 
             if self.player.mask.overlap(ball_mask, offset) and self.ball.velocity.x < 0:
+
+               #  self.ball.rect.left = self.player.rect.right do not use
+                # self.ball.rect.x -= self.ball.velocity.x breaks game
+                self.ball.rect.x = self.ball.prev_x
+                self.ball.rect.y = self.ball.prev_y     
+
                 paddle_height = self.player.rect.height
                 third = paddle_height / 3
 
@@ -119,6 +135,14 @@ class Game:
             )
 
             if self.opponent.mask.overlap(ball_mask, offset) and self.ball.velocity.x > 0:
+
+               # self.ball.rect.right = self.opponent.rect.left This lags out the ball NOOOOOOO
+
+                # self.ball.rect.x -= self.ball.velocity.x
+
+                self.ball.rect.x = self.ball.prev_x
+                self.ball.rect.y = self.ball.prev_y
+
                 self.ball.reflect(pygame.Vector2(-1, 0))
         
 
@@ -142,6 +166,9 @@ class Game:
             self.ball.draw(self.screen)
             self.player.draw(self.screen)
             self.opponent.draw(self.screen)
+
+            
+            self.drawScore()
 
             pygame.display.flip()
 
