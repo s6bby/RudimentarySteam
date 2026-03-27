@@ -3,6 +3,11 @@
     "@api/virustotal": "file:.api/apis/virustotal",
     "axios": "^1.13.5",
     "bottleneck": "^2.19.5",
-    "dotenv": "^17.3.1"
+    "dotenv": "^17.3.1",
+    "cli-progress": "^3.12.0",
+    "underscore": "^1.13.8"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }
