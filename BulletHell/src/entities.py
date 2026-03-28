@@ -15,20 +15,20 @@ class Player:
         self.checkCollisions()
         self.draw()  
         self.shoot()         
-    def shoot(self):
+    def shoot(self, screen, dt):
         keysPressed = pygame.key.get_pressed()
         self.shootTimer += dt
         if keysPressed[pygame.K_SPACE] and self.shootTimer >= 0.25:
             self.shootTimer = 0
             self.bullets.append(Bullet(self.position, pygame.mouse.get_pos()))
         for bullet in self.bullets[:]:
-            if not bullet.update():
+            if not bullet.update(screen, dt):
                 self.bullets.remove(bullet)
             else:
-                bullet.draw()
+                bullet.draw(screen)
     def checkCollisions(self):
         pass        #TODO
-    def move(self):
+    def move(self, dt):
         velocity = pygame.Vector2(0, 0)
         keysPressed = pygame.key.get_pressed()
         if keysPressed[pygame.K_w]:
@@ -63,21 +63,21 @@ class Glob(Enemy):
         self.speed = 30
         self.bullets = []
         self.shootTimer = 0
-    def update(self, targetposition):
+    def update(self, targetposition, screen, dt):
         self.path(targetposition)
-        self.draw()
+        self.draw(screen)
         self.shootTimer += dt
         if self.shootTimer >= 1:
             self.shootTimer = 0
             self.bullets.append(self.shoot(targetposition))
         for bullet in self.bullets[:]:
-            if not bullet.update():
+            if not bullet.update(screen, dt):
                 self.bullets.remove(bullet)
             else:
-                bullet.draw()
+                bullet.draw(screen)
     def draw(self, screen):
         pygame.draw.circle(screen, "red", self.position, 50)
-    def path(self,targetposition):
+    def path(self,targetposition, dt):
         length = targetposition - self.position
         if length.magnitude() != 0:
             length.normalize_ip()
@@ -93,7 +93,7 @@ class Bullet:
         if travelVector.magnitude() != 0:
             travelVector.normalize_ip()
             self.velocity = pygame.Vector2(travelVector * self.speed)
-    def update(self):
+    def update(self, screen, dt):
         self.position += self.velocity * dt
         if self.position.x > screen.get_width() or self.position.x < 0 or self.position.y > screen.get_height() or self.position.y < 0:
             return False

@@ -1,5 +1,6 @@
 import pygame
 from settings import settings, themes
+from entities import Player, Enemy, Glob
 
 
 class FPSCounter:
