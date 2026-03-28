@@ -11,3 +11,7 @@ In the `./BackEnd` directory `npm install express`
 `npx ts-node client.ts`
 
 `npx ts-node server.ts`
+
+## Run Tests
+
+`npm test`
