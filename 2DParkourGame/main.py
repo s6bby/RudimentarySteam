@@ -72,6 +72,19 @@ class Projectile:
             (self.rect.x - camera_x, self.rect.y, 10, 10)
         )
 
+class Checkpoint:
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+        self.activated = False
+
+    def draw(self, screen, camera_x):
+        color = (0, 255, 255) if not self.activated else (255, 255, 0)
+        pygame.draw.rect(
+            screen,
+            color,
+            (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height)
+        )
+
 class Platform:
     def __init__(self, rect, moving=False, move_range=0, speed=0):
         self.rect = pygame.Rect(rect)
@@ -109,18 +122,6 @@ class MenuScene(Scene):
         screen.fill(colors["black"])
         self.play_button.draw(screen)
 
-class PowerUp:
-    def __init__(self, rect, color=(255, 255, 0)):
-        self.rect = pygame.Rect(rect)
-        self.color = color
-
-    def draw(self, screen, camera_x):
-        pygame.draw.rect(
-            screen,
-            self.color,
-            (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height)
-        )
-
 class GameScene(Scene):
     def __init__(self, game):
         super().__init__(game)
@@ -135,6 +136,14 @@ class GameScene(Scene):
         self.on_ground = False
 
         self.camera_x = 0
+
+        self.dash_speed = 1200
+        self.dash_time = 0.15
+        self.dash_timer = 0
+        self.dash_cooldown = 0.5
+        self.dash_cooldown_timer = 0
+        self.dashing = False
+        self.facing = 1
 
         self.platforms = [
             Platform((0, h - 100, w * 3, 100)),
@@ -154,6 +163,13 @@ class GameScene(Scene):
             {"rect": pygame.Rect(600, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
             {"rect": pygame.Rect(1200, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
         ]
+
+        self.checkpoints = [
+            Checkpoint((300, h - 150, 30, 50)),
+            Checkpoint((1000, h - 200, 30, 50)),
+        ]
+
+        self.spawn_point = (100, h - 150)
 
         middle_platform = self.platforms[2].rect
         self.jumping_enemy = {
@@ -177,10 +193,6 @@ class GameScene(Scene):
         ]
 
         self.projectiles = []
-
-        self.powerups = [PowerUp((900, h - 170, 30, 30))]
-        self.has_double_jump = False
-        self.double_jump_used = False
 
     def move_and_collide(self, rect, velocity, dt):
         previous_rect = rect.copy()
@@ -211,44 +223,61 @@ class GameScene(Scene):
     def try_jump(self):
         if self.on_ground:
             self.player_vel.y = self.jump_strength
-            self.double_jump_used = False
-            return True
-        elif self.has_double_jump and not self.double_jump_used:
-            self.player_vel.y = self.jump_strength
-            self.double_jump_used = True
-            return True
-        return False
 
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            self.try_jump()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                self.try_jump()
+
+            if event.key == pygame.K_f and self.dash_cooldown_timer <= 0:
+                self.dashing = True
+                self.dash_timer = self.dash_time
+                self.dash_cooldown_timer = self.dash_cooldown
+
+                direction = self.facing
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                    direction = -1
+                if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                    direction = 1
+
+                self.player_vel.x = direction * self.dash_speed
+                self.player_vel.y = 0
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
 
-        self.player_vel.x = 0
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.player_vel.x = -self.move_speed
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.player_vel.x = self.move_speed
+        if not self.dashing:
+            self.player_vel.x = 0
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                self.player_vel.x = -self.move_speed
+                self.facing = -1
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                self.player_vel.x = self.move_speed
+                self.facing = 1
 
-        self.player_vel.y += self.gravity * dt
+        if self.dashing:
+            self.dash_timer -= dt
+            if self.dash_timer <= 0:
+                self.dashing = False
+
+        if self.dash_cooldown_timer > 0:
+            self.dash_cooldown_timer -= dt
+
+        if not self.dashing:
+            self.player_vel.y += self.gravity * dt
 
         for platform in self.platforms:
             platform.update(dt)
 
         self.on_ground = self.move_and_collide(self.player, self.player_vel, dt)
 
-        if self.on_ground:
-            self.double_jump_used = False
+        for checkpoint in self.checkpoints:
+            if self.player.colliderect(checkpoint.rect):
+                checkpoint.activated = True
+                self.spawn_point = checkpoint.rect.topleft
 
         self.camera_x = self.player.x - 300
-
-        for powerup in self.powerups[:]:
-            if self.player.colliderect(powerup.rect):
-                self.has_double_jump = True
-                self.powerups.remove(powerup)
-                print("Power-up collected! Double jump enabled!")
 
         for enemy in self.enemies:
             rect = enemy["rect"]
@@ -258,13 +287,6 @@ class GameScene(Scene):
             vel.y += self.gravity * dt
 
             self.move_and_collide(rect, vel, dt)
-
-            if rect.colliderect(self.player):
-                self.player.topleft = (100, self.game.screen.get_height() - 150)
-                self.player_vel = pygame.Vector2(0, 0)
-                self.has_double_jump = False
-                self.double_jump_used = False
-                print("Double jump lost!")
 
         rect = self.jumping_enemy["rect"]
         vel = self.jumping_enemy["vel"]
@@ -276,13 +298,6 @@ class GameScene(Scene):
 
         if grounded:
             vel.y = self.jumping_enemy["jump_strength"]
-
-        if rect.colliderect(self.player):
-            self.player.topleft = (100, self.game.screen.get_height() - 150)
-            self.player_vel = pygame.Vector2(0, 0)
-            self.has_double_jump = False
-            self.double_jump_used = False
-            print("Double jump lost!")
 
         if self.player.colliderect(self.level_end):
             self.game.change_scene(LevelCompletionScene(self.game))
@@ -298,33 +313,20 @@ class GameScene(Scene):
                 )
                 shooter["cooldown"] = 2
 
-            if rect.colliderect(self.player):
-                self.player.topleft = (100, self.game.screen.get_height() - 150)
-                self.player_vel = pygame.Vector2(0, 0)
-                self.has_double_jump = False
-                self.double_jump_used = False
-                print("Double jump lost!")
-
         for projectile in self.projectiles[:]:
             projectile.update(dt)
 
             if projectile.rect.colliderect(self.player):
-                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player.topleft = self.spawn_point
                 self.player_vel = pygame.Vector2(0, 0)
-                self.has_double_jump = False
-                self.double_jump_used = False
-                print("Double jump lost!")
                 self.projectiles.remove(projectile)
             elif projectile.rect.x < 0 or projectile.rect.x > 3000:
                 self.projectiles.remove(projectile)
 
         for spike in self.spikes:
             if self.player.colliderect(spike.rect):
-                self.player.topleft = (100, self.game.screen.get_height() - 150)
+                self.player.topleft = self.spawn_point
                 self.player_vel = pygame.Vector2(0, 0)
-                self.has_double_jump = False
-                self.double_jump_used = False
-                print("Double jump lost!")
 
     def draw(self, screen):
         screen.fill(colors["sky"])
@@ -379,6 +381,9 @@ class GameScene(Scene):
         for spike in self.spikes:
             spike.draw(screen, self.camera_x)
 
+        for checkpoint in self.checkpoints:
+            checkpoint.draw(screen, self.camera_x)
+
         for shooter in self.shooters:
             pygame.draw.rect(
                 screen,
@@ -391,16 +396,6 @@ class GameScene(Scene):
 
         for projectile in self.projectiles:
             projectile.draw(screen, self.camera_x)
-
-        for powerup in self.powerups:
-            powerup.draw(screen, self.camera_x)
-
-        font = pygame.font.Font(None, 36)
-        if self.has_double_jump:
-            status = "Double Jump: READY" if not self.double_jump_used else "Double Jump: USED (land to refresh)"
-            color = (0, 255, 0) if not self.double_jump_used else (255, 255, 0)
-            text = font.render(status, True, color)
-            screen.blit(text, (10, 10))
 
 class LevelCompletionScene(Scene):
     def __init__(self, game):
