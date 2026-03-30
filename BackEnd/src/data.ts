@@ -76,7 +76,7 @@ export class Data
     }
 }
 
-const DataSchema = z.object({
+export const DataSchema = z.object({
     users: z.array(RawUserSchema),
     applications: z.array(RawApplicationSchema)
 }).transform((data) => {
