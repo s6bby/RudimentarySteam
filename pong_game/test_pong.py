@@ -22,6 +22,33 @@ class PongTests(unittest.TestCase):
         self.assertEqual(game.ball.velocity.x, 6)
 
 
+    def testPaddleMovement(self):
+        # Black box unit test
+        # checks player and opponent paddle movement
+
+        game = Game()
+
+        # Player paddle up
+        pastPlayerY = game.player.rect.y
+        game.movePlayerUp()
+        self.assertEqual(game.player.rect.y, pastPlayerY - 9)
+
+        # Player paddle down
+        pastPlayerY = game.player.rect.y
+        game.movePlayerDown()
+        self.assertEqual(game.player.rect.y, pastPlayerY + 9)
+
+        # Opponent paddle up
+        pastOpponentY = game.opponent.rect.y
+        game.moveOpponentUp()
+        self.assertEqual(game.opponent.rect.y, pastOpponentY - 9)
+
+        # Opponent paddle down
+        pastOpponentY = game.opponent.rect.y
+        game.moveOpponentDown()
+        self.assertEqual(game.opponent.rect.y, pastOpponentY + 9)
+
+
     def testcheckCollisions(self):
         # White box unit test
         # top collision, bottom collision, left scoring, and right scoring are tested
@@ -86,24 +113,25 @@ class PongTests(unittest.TestCase):
         # Player scores
         game.ball.rect.right = game.width + 10
         collision = game.ball.checkCollisions(game.width, game.height)
+        game.updateScore(collision)
 
-        if collision == "player":
-            game.playerScore += 1
-
-        self.assertEqual(collision,"player")
+        self.assertEqual(collision, "player")
         self.assertEqual(game.playerScore, 1)
-        # print('Player scored')
+
+        # reset state before next scoring case
+        game.ball.rect.center = (game.width // 2, game.height // 2)
 
         # Opponent scores
         game.ball.rect.left = -10
         collision = game.ball.checkCollisions(game.width, game.height)
+        game.updateScore(collision)
 
-        if collision == "opponent":
-            game.opponentScore += 1
-
-        self.assertEqual(collision,"opponent")
+        self.assertEqual(collision, "opponent")
         self.assertEqual(game.opponentScore, 1)
-        # print('Opponent scored')
+
+
+    
+
 
 if __name__ == "__main__":
     unittest.main()       

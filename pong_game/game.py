@@ -32,7 +32,51 @@ class Game:
 
         self.font = pygame.font.Font(None, 50)  # default pygame font
 
-        
+        self.opponentHits = 0
+        self.buffActive = False
+        self.buffEndTime = 0
+        self.buffMultiplier = 2.5
+        self.originalVelocity = None
+        self.buffHits = 0
+
+    def buffs(self):
+
+        # Activate buff after 2 hits
+        if self.opponentHits >= 2 and not self.buffActive:
+            self.ball.velocity *= self.buffMultiplier
+            self.buffActive = True
+            self.buffHits = 0
+            self.opponentHits = 0
+
+        # While buff active count hits
+        elif self.buffActive:
+            self.buffHits += 1
+
+            if self.buffHits >= 2:
+                self.ball.velocity /= self.buffMultiplier
+                self.buffActive = False
+                self.buffHits = 0
+
+    def updateScore(self, collision):
+        if collision == "player":
+            self.playerScore += 1
+        elif collision == "opponent":
+            self.opponentScore += 1
+
+       
+
+    def movePlayerUp(self):
+        self.player.rect.y -= 9
+
+    def movePlayerDown(self):
+        self.player.rect.y += 9
+
+    def moveOpponentUp(self):
+        self.opponent.rect.y -= 9
+
+    def moveOpponentDown(self):
+        self.opponent.rect.y += 9
+
     def gameReset(self): 
         self.ball.rect.center = (self.width // 2, self.height // 2)
         self.ball.velocity = pygame.Vector2(self.ball.speed, 0)
@@ -65,19 +109,18 @@ class Game:
                 self.gameReset()
 
             if keys[pygame.K_w]:
-                self.player.rect.y -= paddle_speed
+                self.movePlayerUp()
 
             if keys[pygame.K_s]:
-                self.player.rect.y += paddle_speed
-
+                self.movePlayerDown()
             
             # TEMP opponent controls 
 
             if keys[pygame.K_UP]:
-                self.opponent.rect.y -= paddle_speed
+                self.moveOpponentUp()
 
             if keys[pygame.K_DOWN]:
-                self.opponent.rect.y += paddle_speed
+                self.moveOpponentDown()
 
 
             # keep playerPaddle on screen
@@ -144,24 +187,24 @@ class Game:
                 self.ball.rect.y = self.ball.prev_y
 
                 self.ball.reflect(pygame.Vector2(-1, 0))
-        
-
+                self.opponentHits += 1
+                self.buffs()
 
             collision = self.ball.checkCollisions(self.width, self.height)
 
-            if collision == "player":
-                self.playerScore += 1
-                print("Player scored!")
-                print("Score:", self.playerScore, "-", self.opponentScore)
-                self.gameReset()
-
-            elif collision == "opponent":
-                self.opponentScore += 1
-                print("Opponent scored!")
-                print("Score:", self.playerScore, "-", self.opponentScore)
-                self.gameReset()
+            if collision is not None:
+                self.updateScore(collision)
 
             
+                if collision == "player":
+                    print("Player scored!")
+                else:
+                    print("Opponent scored!")
+
+                print("Score:", self.playerScore, "-", self.opponentScore)
+                self.gameReset()
+
+          
 
             self.ball.draw(self.screen)
             self.player.draw(self.screen)

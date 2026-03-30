@@ -7,7 +7,7 @@ class Ball:
         self.rect.center = (screen_width // 2, screen_height // 2) 
         self.color = (255, 255, 255) 
 
-        self.speed = 8
+        self.speed = 6
         self.velocity = pygame.Vector2(self.speed, 0)
                                             
         self.image = pygame.image.load("assets/tempBall.png").convert_alpha()
