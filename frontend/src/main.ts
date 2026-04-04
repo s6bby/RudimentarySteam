@@ -11,6 +11,20 @@ type Listing = {
   updated: string;
 };
 
+type Profile = {
+  name: string;
+  title: string;
+  bio: string;
+  dateJoined: string;
+  level: number;
+  totalHoursPlayed: number;
+  comments: string[];
+  achievements: {
+    title: string;
+    description: string;
+  }[];
+};
+
 const LISTINGS: Listing[] = [
   {
     id: "1",
@@ -54,6 +68,34 @@ const LISTINGS: Listing[] = [
     updated: "6 hours ago",
   },
 ];
+
+const PLACEHOLDER_PROFILE: Profile = {
+  name: "Placeholder Name",
+  title: "Placeholder community member",
+  bio: "Front-end placeholder profile for a player who tests builds, leaves feedback, and keeps an eye on every new drop on the platform.",
+  dateJoined: "March 12, 2024",
+  level: 18,
+  totalHoursPlayed: 412,
+  comments: [
+    "Really clean launcher flow. Would love game-specific update notes next.",
+    "The latest build boots fast and the library view feels much better now.",
+    "Please keep the earthy theme. It gives the platform its own identity.",
+  ],
+  achievements: [
+    {
+      title: "First Download",
+      description: "Installed the first title on the platform.",
+    },
+    {
+      title: "Patch Watcher",
+      description: "Checked in on five release updates in a single week.",
+    },
+    {
+      title: "Community Voice",
+      description: "Posted enough feedback to shape an upcoming feature.",
+    },
+  ],
+};
 
 function needEl<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -261,6 +303,102 @@ function renderPage(title: string, content: string) {
   `;
 }
 
+function renderProfilePage(profile: Profile) {
+  setDrawerOpen(false);
+
+  const initials = profile.name
+    .split(" ")
+    .map((part) => part[0] ?? "")
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const commentsHtml = profile.comments
+    .map(
+      (comment) => `
+        <li class="profile-list-item">
+          <p class="profile-list-copy">${escapeHtml(comment)}</p>
+        </li>
+      `
+    )
+    .join("");
+
+  const achievementsHtml = profile.achievements
+    .map(
+      (achievement) => `
+        <li class="profile-list-item">
+          <div class="profile-list-title">${escapeHtml(achievement.title)}</div>
+          <p class="profile-list-copy">${escapeHtml(achievement.description)}</p>
+        </li>
+      `
+    )
+    .join("");
+
+  layoutCenter.innerHTML = `
+    <section class="panel center-panel profile-panel">
+      <div class="panel-title">My Profile</div>
+
+      <div class="page-body profile-page">
+        <section class="profile-hero">
+          <div class="profile-avatar" aria-hidden="true">${escapeHtml(initials)}</div>
+
+          <div class="profile-hero-copy">
+            <div class="profile-kicker">Placeholder User</div>
+            <h2 class="profile-name">${escapeHtml(profile.name)}</h2>
+            <p class="profile-role">${escapeHtml(profile.title)}</p>
+          </div>
+        </section>
+
+        <section class="profile-stats" aria-label="Profile stats">
+          <article class="profile-stat">
+            <div class="profile-stat-label">Level</div>
+            <div class="profile-stat-value">${profile.level.toLocaleString()}</div>
+          </article>
+
+          <article class="profile-stat">
+            <div class="profile-stat-label">Comments</div>
+            <div class="profile-stat-value">${profile.comments.length.toLocaleString()}</div>
+          </article>
+
+          <article class="profile-stat">
+            <div class="profile-stat-label">Achievements</div>
+            <div class="profile-stat-value">${profile.achievements.length.toLocaleString()}</div>
+          </article>
+
+          <article class="profile-stat">
+            <div class="profile-stat-label">Hours Played</div>
+            <div class="profile-stat-value">${profile.totalHoursPlayed.toLocaleString()}</div>
+            <div class="profile-stat-footnote">Platform total</div>
+          </article>
+        </section>
+
+        <section class="profile-grid">
+          <article class="profile-card profile-card-wide">
+            <div class="profile-section-title">Bio</div>
+            <p class="profile-bio">${escapeHtml(profile.bio)}</p>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Date Joined</div>
+            <div class="profile-detail-value">${escapeHtml(profile.dateJoined)}</div>
+            <p class="profile-detail-copy">Member since the early placeholder era of Rudimentary Steam.</p>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Comments</div>
+            <ul class="profile-list">${commentsHtml}</ul>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Achievements</div>
+            <ul class="profile-list">${achievementsHtml}</ul>
+          </article>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
 function handleNavAction(action: string) {
   setMobileMenuOpen(false);
 
@@ -290,13 +428,7 @@ function handleNavAction(action: string) {
       break;
 
     case "profile":
-      renderPage(
-        "My Profile",
-        `
-          <p>User profile info goes here.</p>
-          <p>Username, avatar, stats, etc.</p>
-        `
-      );
+      renderProfilePage(PLACEHOLDER_PROFILE);
       break;
 
     case "settings":
@@ -396,6 +528,7 @@ export {
   boot,
   setMobileMenuOpen,
   renderPage,
+  renderProfilePage,
   handleNavAction,
 };
 
