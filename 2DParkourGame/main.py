@@ -130,6 +130,11 @@ class GameScene(Scene):
         self.player = pygame.Rect(100, h - 150, 50, 50)
         self.player_vel = pygame.Vector2(0, 0)
 
+        self.max_health = 3
+        self.health = self.max_health
+        self.invincible_timer = 0
+        self.invincible_duration = 1
+
         self.gravity = 1500
         self.move_speed = 400
         self.jump_strength = -700
@@ -194,6 +199,18 @@ class GameScene(Scene):
 
         self.projectiles = []
 
+    def take_damage(self, amount=1):
+        if self.invincible_timer > 0:
+            return
+
+        self.health -= amount
+        self.invincible_timer = self.invincible_duration
+
+        if self.health <= 0:
+            self.player.topleft = self.spawn_point
+            self.player_vel = pygame.Vector2(0, 0)
+            self.health = self.max_health
+
     def move_and_collide(self, rect, velocity, dt):
         previous_rect = rect.copy()
 
@@ -247,6 +264,9 @@ class GameScene(Scene):
     def update(self, dt):
         keys = pygame.key.get_pressed()
 
+        if self.invincible_timer > 0:
+            self.invincible_timer -= dt
+
         if not self.dashing:
             self.player_vel.x = 0
             if keys[pygame.K_a] or keys[pygame.K_LEFT]:
@@ -288,6 +308,9 @@ class GameScene(Scene):
 
             self.move_and_collide(rect, vel, dt)
 
+            if self.player.colliderect(rect):
+                self.take_damage()
+
         rect = self.jumping_enemy["rect"]
         vel = self.jumping_enemy["vel"]
 
@@ -317,16 +340,14 @@ class GameScene(Scene):
             projectile.update(dt)
 
             if projectile.rect.colliderect(self.player):
-                self.player.topleft = self.spawn_point
-                self.player_vel = pygame.Vector2(0, 0)
+                self.take_damage()
                 self.projectiles.remove(projectile)
             elif projectile.rect.x < 0 or projectile.rect.x > 3000:
                 self.projectiles.remove(projectile)
 
         for spike in self.spikes:
             if self.player.colliderect(spike.rect):
-                self.player.topleft = self.spawn_point
-                self.player_vel = pygame.Vector2(0, 0)
+                self.take_damage()
 
     def draw(self, screen):
         screen.fill(colors["sky"])
@@ -341,14 +362,18 @@ class GameScene(Scene):
                  platform.rect.height)
             )
 
-        pygame.draw.rect(
-            screen,
-            colors["blue"],
-            (self.player.x - self.camera_x,
-             self.player.y,
-             50,
-             50)
-        )
+        if not (self.invincible_timer > 0 and int(self.invincible_timer * 10) % 2 == 0):
+            pygame.draw.rect(
+                screen,
+                colors["blue"],
+                (self.player.x - self.camera_x,
+                 self.player.y,
+                 50,
+                 50)
+            )
+
+        for i in range(self.health):
+            pygame.draw.rect(screen, (255, 0, 0), (20 + i * 40, 20, 30, 30))
 
         for enemy in self.enemies:
             pygame.draw.rect(
