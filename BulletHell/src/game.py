@@ -6,7 +6,6 @@ from scenes import FPSCounter, MainMenu
 
 
 
-
       
 class Game:
     def __init__(self, screen):
@@ -23,7 +22,7 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
-            self.currentScene = self.currentScene.update(events, self.dt)   
+            self.currentScene = self.currentScene.update(self.screen, events, self.dt)   
             self.currentScene.draw(self.screen)
             self.fpsCounter.draw(self.screen, clock)        
             self.dt = clock.tick(60) / 1000   
