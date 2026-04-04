@@ -1,20 +1,48 @@
 import pygame
-from settings import settings, themes
-
-class Player:
-    def __init__(self,xpos,ypos):
+from settings import settings
+class Entity:
+    def __init__(self, xpos, ypos):
         self.position = pygame.Vector2(xpos, ypos)
+    def update(self, screen, dt):
+        pass
+    def draw(self, screen):
+        pass
+
+
+class Player(Entity):
+    def __init__(self, xpos, ypos):
+        super().__init__(xpos, ypos)
+        self.radius = 70 
         self.speed = 100
         self.health = 100
         self.bullets = []
         self.shootTimer = 0
+        self.healthTimer = 0
         self.settings = settings
         self.color = settings.theme["player"]
-    def update(self):       
-        self.move()
-        self.checkCollisions()
-        self.draw()  
-        self.shoot()         
+
+    def update(self, screen, dt, enemies):       
+        self.move(dt)
+        self.checkCollisions(enemies, screen, dt)
+        self.shoot(screen, dt)         
+
+    def checkCollisions(self, enemies, screen, dt):
+        self.healthTimer += dt
+        if self.position.x - self.radius < 0:
+            self.position.x = self.radius
+        if self.position.x + self.radius > screen.get_width():
+            self.position.x = screen.get_width() - self.radius
+        if self.position.y - self.radius < 0:
+            self.position.y = self.radius
+        if self.position.y + self.radius > screen.get_height():
+            self.position.y = screen.get_height() - self.radius
+
+
+        for enemy in enemies:
+            distance = self.position.distance_to(enemy.position)     
+            if distance < (self.radius + 50) and self.healthTimer >= 1/3:
+                self.health -= 10
+                self.healthTimer = 0
     def shoot(self, screen, dt):
         keysPressed = pygame.key.get_pressed()
         self.shootTimer += dt
@@ -26,8 +54,6 @@ class Player:
                 self.bullets.remove(bullet)
             else:
                 bullet.draw(screen)
-    def checkCollisions(self):
-        pass        #TODO
     def move(self, dt):
         velocity = pygame.Vector2(0, 0)
         keysPressed = pygame.key.get_pressed()
@@ -45,15 +71,12 @@ class Player:
             self.position += velocity * self.speed * dt
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, self.position, 70)
+        font = pygame.font.SysFont(None, 36)
+        healthText = font.render(f"Health: {self.health}", True, self.color)
+        screen.blit(healthText, (10, 50))
         
 
-class Enemy:
-    def __init__(self, xpos, ypos):
-        self.position = pygame.Vector2(xpos, ypos)
-    def update(self, targetposition):
-        pass
-    def draw(self):
-        pass
+class Enemy(Entity):
     def path(self, targetposition):
         pass
 
@@ -64,8 +87,7 @@ class Glob(Enemy):
         self.bullets = []
         self.shootTimer = 0
     def update(self, targetposition, screen, dt):
-        self.path(targetposition)
-        self.draw(screen)
+        self.path(targetposition, dt)
         self.shootTimer += dt
         if self.shootTimer >= 1:
             self.shootTimer = 0
@@ -85,9 +107,9 @@ class Glob(Enemy):
     def shoot(self, targetposition):
         return Bullet(self.position, targetposition)
 
-class Bullet:
+class Bullet(Entity):
     def __init__(self, position, targetposition):
-        self.position = pygame.Vector2(position)
+        super().__init__(position[0], position[1])
         self.speed = 200
         travelVector = pygame.Vector2(targetposition - self.position)
         if travelVector.magnitude() != 0:

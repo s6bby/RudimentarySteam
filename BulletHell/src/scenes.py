@@ -15,7 +15,7 @@ class FPSCounter:
 class Scene:
     def __init__(self):
         pass
-    def update(self, events):
+    def update(self, events, dt):
         pass
     def draw(self, screen):
         pass
@@ -24,7 +24,7 @@ class MainMenu(Scene):
     def __init__(self):
         super().__init__()
 
-    def update(self, events):
+    def update(self, screen, events, dt):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -47,7 +47,7 @@ class MainMenu(Scene):
 class ThemeShop(Scene):
     def __init__(self):
         super().__init__()
-    def update(self, events):
+    def update(self, screen, events, dt):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -58,8 +58,6 @@ class ThemeShop(Scene):
                     settings.unlockedThemes["Dark"] = True               
                 elif event.key == pygame.K_3 and not settings.unlockedThemes["Light"]:
                     settings.unlockedThemes["Light"] = True
-        
-        self.draw()
         return self
     def draw(self, screen):
         screen.fill("black")
@@ -81,19 +79,28 @@ class PlayScene(Scene):
         super().__init__()
         self.player = Player(400,300)
         self.glob = Glob(100,100)
-        self.fpsCounter = FPSCounter()
+        self.enemies = [self.glob]
+    def update(self, screen, events, dt):
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return MainMenu()
+            self.player.update(screen, dt, self.enemies)
+            self.glob.update(self.player.position, screen, dt)
+            if self.player.health <= 0:
+                return MainMenu()
+            return self
     def draw(self, screen):
         screen.fill("black")
-        self.player.update()
-        self.glob.update(self.player.position)
-        self.fpsCounter.draw()
+        self.player.draw(screen)
+        self.glob.draw(screen)
         return self
 
 class SettingsScene(Scene):
     def __init__(self):
         super().__init__()
 
-    def update(self, events):
+    def update(self, screen, events, dt):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -125,8 +132,6 @@ class SettingsScene(Scene):
                 
                 elif event.key == pygame.K_3 and settings.unlockedThemes["Light"]:
                     settings.theme = themes["Light"]
-
-        self.draw()
         return self
     def draw(self, screen):
         screen.fill(settings.theme["background"])
