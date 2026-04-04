@@ -1,5 +1,5 @@
 import pygame
-from settings import settings, themes
+from settings import settings
 
 class Player:
     def __init__(self,xpos,ypos):

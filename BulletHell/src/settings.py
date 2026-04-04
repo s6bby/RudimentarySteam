@@ -25,3 +25,5 @@ class Settings:
         self.difficulty = "Normal"
         self.theme = themes["Default"]
         self.unlockedThemes = {"Default": True, "Dark": False, "Light": False}
+        
+settings = Settings()
