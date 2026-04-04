@@ -157,6 +157,6 @@ describe("testing suite for rudimentary steam", () => {
     expect(layoutCenter.textContent).toContain("Achievements");
     expect(layoutCenter.textContent).toContain("Hours Played");
     expect(layoutCenter.textContent).toContain("March 12, 2024");
-    expect(layoutCenter.textContent).toContain("Alex Mercer");
+    expect(layoutCenter.textContent).toContain("Placeholder Name");
   });
 });
