@@ -10,10 +10,6 @@
         {
           "userId": 1,
           "comment": "Great app!"
-        },
-        {
-          "userId": 1,
-          "comment": "Great app!"
         }
       ]
     },
@@ -47,6 +43,11 @@
       "userId": 1,
       "username": "UserOne",
       "email": "userone@example.com"
+    },
+    {
+      "userId": 2,
+      "username": "UserTwo",
+      "email": "usertwo@example.com"
     }
   ]
 }
