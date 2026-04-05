@@ -19,6 +19,10 @@ In the `./BackEnd` directory `npm install express`
 - `/users` returns a list of users in database
 - `/user/:id` returns a user with id
 
+#### POST requests
+- `/add/user` Given valid JSON for a user will add a user
+    - try it out with `curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d '{"userId": 3, "username": "UserThree", "email": "userthree@example.com"}'`
+
 #### Feature plans
 - User login
 - User is able to download and leave reviews
