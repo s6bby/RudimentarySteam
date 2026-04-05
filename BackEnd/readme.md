@@ -24,6 +24,8 @@ In the `./BackEnd` directory `npm install express`
 - User is able to download and leave reviews
 - Executable download
 
+#### Note - example data is in `./data/data.json`
+
 ## Run Tests
 
 `npm test`
