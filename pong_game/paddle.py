@@ -1,9 +1,10 @@
 import pygame
 
 class Paddle:
-    def __init__(self, x, screen_height, width=15, height=100):
+    def __init__(self, x, screen_height, image_path):
 
-        self.image = pygame.image.load("assets/newplayerPaddle.png").convert_alpha()
+        self.image = pygame.image.load(image_path).convert_alpha()
+
         self.image = pygame.transform.scale(self.image, (128,128))
 
         self.rect = self.image.get_rect()
@@ -21,7 +22,7 @@ class Paddle:
    
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (0, 255, 0), self.rect, 2) # debug hitbox
+       # pygame.draw.rect(screen, (0, 255, 0), self.rect, 2) # debug hitbox
         
         screen.blit(self.image, self.rect) 
 
