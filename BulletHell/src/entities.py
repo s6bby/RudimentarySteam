@@ -3,7 +3,7 @@ from settings import settings
 class Entity:
     def __init__(self, xpos, ypos):
         self.position = pygame.Vector2(xpos, ypos)
-    def update(self, screen, dt):
+    def update(self, targetposition, screen, dt, entityManager):
         pass
     def draw(self, screen):
         pass
@@ -21,12 +21,12 @@ class Player(Entity):
         self.settings = settings
         self.color = settings.theme["player"]
 
-    def update(self, screen, dt, enemies):       
+    def update(self, targetposition, screen, dt, entityManager):
         self.move(dt)
-        self.checkCollisions(enemies, screen, dt)
-        self.shoot(screen, dt)         
+        self.checkCollisions(entityManager, screen, dt)
+        self.shoot(screen, dt, entityManager)
 
-    def checkCollisions(self, enemies, screen, dt):
+    def checkCollisions(self, entityManager, screen, dt):
         self.healthTimer += dt
         if self.position.x - self.radius < 0:
             self.position.x = self.radius
@@ -37,23 +37,19 @@ class Player(Entity):
         if self.position.y + self.radius > screen.get_height():
             self.position.y = screen.get_height() - self.radius
 
-
-        for enemy in enemies:
-            distance = self.position.distance_to(enemy.position)     
-            if distance < (self.radius + 50) and self.healthTimer >= 1/3:
-                self.health -= 10
-                self.healthTimer = 0
-    def shoot(self, screen, dt):
+        
+        for enemy in entityManager.entities:
+            if isinstance(enemy, Enemy):
+                distance = self.position.distance_to(enemy.position)     
+                if distance < (self.radius + 50) and self.healthTimer >= 1/3:
+                    self.health -= 10
+                    self.healthTimer = 0
+    def shoot(self, screen, dt, entityManager):
         keysPressed = pygame.key.get_pressed()
         self.shootTimer += dt
         if keysPressed[pygame.K_SPACE] and self.shootTimer >= 0.25:
             self.shootTimer = 0
-            self.bullets.append(Bullet(self.position, pygame.mouse.get_pos()))
-        for bullet in self.bullets[:]:
-            if not bullet.update(screen, dt):
-                self.bullets.remove(bullet)
-            else:
-                bullet.draw(screen)
+            entityManager.add(Bullet(self.position, pygame.mouse.get_pos()))
     def move(self, dt):
         velocity = pygame.Vector2(0, 0)
         keysPressed = pygame.key.get_pressed()
@@ -86,17 +82,12 @@ class Glob(Enemy):
         self.speed = 30
         self.bullets = []
         self.shootTimer = 0
-    def update(self, targetposition, screen, dt):
+    def update(self, targetposition, screen, dt, entityManager):
         self.path(targetposition, dt)
         self.shootTimer += dt
         if self.shootTimer >= 1:
             self.shootTimer = 0
-            self.bullets.append(self.shoot(targetposition))
-        for bullet in self.bullets[:]:
-            if not bullet.update(screen, dt):
-                self.bullets.remove(bullet)
-            else:
-                bullet.draw(screen)
+            entityManager.add(self.shoot(targetposition))
     def draw(self, screen):
         pygame.draw.circle(screen, "red", self.position, 50)
     def path(self,targetposition, dt):
@@ -107,7 +98,7 @@ class Glob(Enemy):
     def shoot(self, targetposition):
         return Bullet(self.position, targetposition)
 
-class Bullet(Entity):
+class Bullet(Enemy):
     def __init__(self, position, targetposition):
         super().__init__(position[0], position[1])
         self.speed = 200
@@ -115,10 +106,12 @@ class Bullet(Entity):
         if travelVector.magnitude() != 0:
             travelVector.normalize_ip()
             self.velocity = pygame.Vector2(travelVector * self.speed)
-    def update(self, screen, dt):
+    def update(self, targetposition, screen, dt, entityManager):
         self.position += self.velocity * dt
         if self.position.x > screen.get_width() or self.position.x < 0 or self.position.y > screen.get_height() or self.position.y < 0:
-            return False
-        return True
+            entityManager.remove(self)
+            
     def draw(self, screen):
         pygame.draw.circle(screen, settings.theme["bullet"], self.position, 10)
+
+
