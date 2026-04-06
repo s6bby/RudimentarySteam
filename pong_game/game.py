@@ -17,9 +17,12 @@ class Game:
 
         self.ball = Ball(self.width, self.height)
 
-        self.player = Paddle(30, self.height, "assets/newplayerPaddle.png")
+        # self.player = Paddle(30, self.height, "assets/newplayerPaddle.png")
 
-        self.opponent = Paddle(self.width - 128 - 30, self.height, "assets/newopponentPaddle.png") # did have help with ai for determining how the spacing for the paddles should be, 
+        # self.opponent = Paddle(self.width - 128 - 30, self.height, "assets/newopponentPaddle.png") # did have help with ai for determining how the spacing for the paddles should be, 
+
+        self.player = Paddle(30, self.height)
+        self.opponent = Paddle(self.width - 50, self.height)
 
         self.playerScore = 0
         self.opponentScore = 0
@@ -114,14 +117,18 @@ class Game:
             if keys[pygame.K_s]:
                 self.movePlayerDown()
             
-            # TEMP opponent controls 
 
-            if keys[pygame.K_UP]:
-                self.moveOpponentUp()
+            # Opponent tracking 
+            ai_speed = 4   # ball speed is 6
 
-            if keys[pygame.K_DOWN]:
-                self.moveOpponentDown()
+            # only track when ball moving toward opponent
+            if self.ball.velocity.x > 0:
 
+                if self.ball.rect.centery < self.opponent.rect.centery - 10:
+                    self.opponent.rect.y -= ai_speed
+
+                elif self.ball.rect.centery > self.opponent.rect.centery + 10:
+                    self.opponent.rect.y += ai_speed
 
             # keep playerPaddle on screen
             if self.player.rect.top < 0:
@@ -144,49 +151,49 @@ class Game:
             
             self.ball.update()
 
-            offset = (
-                self.ball.rect.left - self.player.rect.left,
-                self.ball.rect.top - self.player.rect.top
-            )
+           # offset = (
+           #     self.ball.rect.left - self.player.rect.left,
+           #    self.ball.rect.top - self.player.rect.top
+            #)
 
-            ball_mask = self.ball.mask
+           # ball_mask = self.ball.mask
 
-            if self.player.mask.overlap(ball_mask, offset) and self.ball.velocity.x < 0:
-
-               #  self.ball.rect.left = self.player.rect.right do not use
-                # self.ball.rect.x -= self.ball.velocity.x breaks game
-                self.ball.rect.x = self.ball.prev_x
-                self.ball.rect.y = self.ball.prev_y     
-
-                paddle_height = self.player.rect.height
-                third = paddle_height / 3
-
-                top_boundary = self.player.rect.top + third
-                bottom_boundary = self.player.rect.bottom - third
-
-                if self.ball.rect.centery < top_boundary:
-                    self.ball.velocity = pygame.Vector2(5, -4)
-                elif self.ball.rect.centery > bottom_boundary:
-                    self.ball.velocity = pygame.Vector2(5, 4)
-                else:
-                    self.ball.velocity = pygame.Vector2(5, 0)
-
-
-            offset = (
-                self.ball.rect.left - self.opponent.rect.left,
-                self.ball.rect.top - self.opponent.rect.top
-            )
-
-            if self.opponent.mask.overlap(ball_mask, offset) and self.ball.velocity.x > 0:
-
-               # self.ball.rect.right = self.opponent.rect.left This lags out the ball NOOOOOOO
-
-                # self.ball.rect.x -= self.ball.velocity.x
-
+            # if self.player.mask.overlap(ball_mask, offset) and self.ball.velocity.x < 0:
+            if self.player.rect.colliderect(self.ball.rect) and self.ball.velocity.x < 0:
                 self.ball.rect.x = self.ball.prev_x
                 self.ball.rect.y = self.ball.prev_y
 
-                self.ball.reflect(pygame.Vector2(-1, 0))
+                hit_pos = self.ball.rect.centery - self.player.rect.top
+                zone_size = self.player.rect.height / 3
+
+                if hit_pos < zone_size:
+                    self.ball.velocity = pygame.Vector2(9, -3)
+                elif hit_pos < zone_size * 2:
+                    self.ball.velocity = pygame.Vector2(9, 0)
+                else:
+                    self.ball.velocity = pygame.Vector2(9, 3)
+
+            # opponent collision
+          #  offset = (
+           #     self.ball.rect.left - self.opponent.rect.left,
+          #      self.ball.rect.top - self.opponent.rect.top
+          #  )
+
+            # if self.opponent.mask.overlap(ball_mask, offset) and self.ball.velocity.x > 0:
+            if self.opponent.rect.colliderect(self.ball.rect) and self.ball.velocity.x > 0:
+                self.ball.rect.x = self.ball.prev_x
+                self.ball.rect.y = self.ball.prev_y
+
+                hit_pos = self.ball.rect.centery - self.opponent.rect.top
+                zone_size = self.opponent.rect.height / 3
+
+                if hit_pos < zone_size:
+                    self.ball.velocity = pygame.Vector2(-9, -3)
+                elif hit_pos < zone_size * 2:
+                    self.ball.velocity = pygame.Vector2(-9, 0)
+                else:
+                    self.ball.velocity = pygame.Vector2(-9, 3)
+
                 self.opponentHits += 1
                 self.buffs()
 

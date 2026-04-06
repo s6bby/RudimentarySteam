@@ -7,11 +7,8 @@ class Ball:
         self.rect.center = (screen_width // 2, screen_height // 2) 
         self.color = (255, 255, 255) 
 
-        self.speed = 6
+        self.speed = 9
         self.velocity = pygame.Vector2(self.speed, 0)
-                                            
-        self.image = pygame.image.load("assets/tempBall.png").convert_alpha()
-        self.mask = pygame.mask.from_surface(self.image)
 
     
         self.rect.x += self.velocity.x  
@@ -50,5 +47,4 @@ class Ball:
         pygame.draw.rect(screen, (123, 0, 0), self.rect, 2) # debug hitbox 
         
         pygame.draw.rect(screen, self.color, self.rect) 
-
         
