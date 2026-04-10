@@ -10,13 +10,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.core.*
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun App() {
@@ -27,18 +30,31 @@ fun App() {
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFAEE3F8)) {
             Column(modifier = Modifier.padding(spacing)) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().weight(1.5f).padding(bottom = 20.dp),
+                    modifier = Modifier.fillMaxWidth().weight(2f).padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.Bottom
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = logic.operationText,
-                        fontSize = 24.sp,
-                    )
-                     AutoResizeText(
-                        text = logic.displayText,
-                        maxFontSize = 72.sp
-                    )
+                    Box(modifier = Modifier.height(40.dp), contentAlignment = Alignment.CenterEnd) {
+                        AutoResizeText(
+                            text = logic.operationText,
+                            maxFontSize = 24.sp,
+                            color = Color(0xFF1B2F59).copy(alpha = 0.6f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier.height(100.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        AutoResizeText(
+                            text = logic.displayText,
+                            maxFontSize = 80.sp,
+                            color = Color(0xFF1B2F59),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier.weight(4f),
@@ -99,7 +115,7 @@ fun CalculatorButton(label: String, logic: CalculatorLogic) {
                 else -> logic.onNumClick(label)
             }
         },
-        modifier = Modifier.fillMaxSize().aspectRatio(1f),
+        modifier = Modifier.fillMaxSize(),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
@@ -120,21 +136,35 @@ fun AutoResizeText(
     textAlign: TextAlign = TextAlign.End,
     maxFontSize: TextUnit = 64.sp
 ) {
-    var fontSizeValue by remember(text) { mutableStateOf(maxFontSize) }
+    var fontSizeValue by remember { mutableStateOf(maxFontSize) }
     var readyToDraw by remember(text) { mutableStateOf(false) }
+
+    LaunchedEffect(text) {
+        if (text.length <= 1 || text == "0") {
+            fontSizeValue = maxFontSize
+        }
+    }
+
+    val minFontSize = 12.sp
+
+    val alpha by animateFloatAsState(
+        targetValue = if (readyToDraw) 1f else 0f,
+        animationSpec = tween(durationMillis = 50)
+    )
 
     Text(
         text = text,
         color = color,
-        modifier = modifier.drawWithContent { if (readyToDraw) drawContent() },
+        modifier = modifier.graphicsLayer(alpha = alpha),
         fontSize = fontSizeValue,
         fontWeight = fontWeight,
         textAlign = textAlign,
         maxLines = 1,
         softWrap = false,
         onTextLayout = { result ->
-            if (result.didOverflowWidth) {
+            if (result.didOverflowWidth && fontSizeValue > minFontSize) {
                 fontSizeValue = fontSizeValue * 0.9f
+                readyToDraw = false
             } else {
                 readyToDraw = true
             }
