@@ -1,28 +1,12 @@
+import math
+
 import pygame
 from settings import settings, themes
-from entities import Player, Enemy, Glob
+from entities import Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
 
 
-class EntityManager:
-    def __init__(self):
-        self.entities = []
-        self.player = None
-    def add(self, entity):
-        self.entities.append(entity)
-    def remove(self, entity):
-        if entity in self.entities:
-            self.entities.remove(entity)
-    def update(self, screen, dt):
-        if self.player is None:
-            for entity in self.entities:
-                if isinstance(entity, Player):
-                    self.player = entity
-                    break
-        for entity in self.entities:
-            entity.update(self.player.position, screen, dt, self)
-    def draw(self, screen):
-        for entity in self.entities:
-            entity.draw(screen)
+
+
 
 
 class FPSCounter:
@@ -100,11 +84,11 @@ class PlayScene(Scene):
     def __init__(self):
         super().__init__()
         self.player = Player(400,300)
-        self.glob = Glob(100,100)
         self.entityManager = EntityManager()
+        self.globSpawner = GlobSpawner(self.entityManager)
+        self.entityManager.add(self.globSpawner)
         self.entityManager.add(self.player)
-        self.entityManager.add(self.glob)
-        self.enemies = [self.glob]
+        self.enemies = []
     def update(self, screen, events, dt):
             for event in events:
                 if event.type == pygame.KEYDOWN:

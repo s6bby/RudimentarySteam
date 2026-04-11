@@ -3,19 +3,22 @@ themes = {
         "background": "black",
         "player": "white",
         "enemy": "red",
-        "bullet": "yellow"
+        "bullet": "yellow",
+        "player_bullet": "cyan"
     },
     "Dark": {
         "background": (30, 30, 30),
         "player": (200, 200, 200),
         "enemy": (255, 100, 100),
-        "bullet": (255, 255, 100)
+        "bullet": (255, 255, 100),
+        "player_bullet": (100, 255, 255)
     },
     "Light": {
         "background": (220, 220, 220),
         "player": (50, 50, 50),
         "enemy": (255, 150, 150),
-        "bullet": (255, 255, 150)
+        "bullet": (255, 255, 150),
+        "player_bullet": (150, 255, 255)
     }
 }
 
