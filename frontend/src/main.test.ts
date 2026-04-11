@@ -158,5 +158,18 @@ describe("testing suite for rudimentary steam", () => {
     expect(layoutCenter.textContent).toContain("Hours Played");
     expect(layoutCenter.textContent).toContain("March 12, 2024");
     expect(layoutCenter.textContent).toContain("Placeholder Name");
+    expect(layoutCenter.textContent).toContain("Looking for playtest feedback");
+    expect(layoutCenter.textContent).toContain("Edit Bio");
+    expect(layoutCenter.textContent).toContain("Wishlist");
+    expect(layoutCenter.textContent).toContain("Recent Activity");
+    expect(layoutCenter.textContent).toContain("Privacy");
+    expect(layoutCenter.textContent).toContain("Friends Online");
+
+    const editBioButton = layoutCenter.querySelector<HTMLButtonElement>(
+      '[data-profile-action="Edit bio"]'
+    );
+    editBioButton?.click();
+
+    expect(alert).toHaveBeenCalledWith("Edit bio (placeholder)");
   });
 });

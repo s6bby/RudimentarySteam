@@ -272,10 +272,38 @@ body.theme-light .header { background: var(--surface); }
   line-height: 1.45;
 }
 
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profile-meta span,
+.profile-tag {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.profile-action-btn {
+  border-radius: 8px;
+}
+
 .profile-stats {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .profile-stat,
@@ -329,11 +357,37 @@ body.theme-light .header { background: var(--surface); }
   grid-column: 1 / -1;
 }
 
+.profile-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .profile-section-title {
   margin: 0 0 12px;
   font-weight: 900;
   letter-spacing: -0.02em;
   color: var(--text);
+}
+
+.profile-section-header .profile-section-title {
+  margin: 0;
+}
+
+.profile-small-btn {
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface3);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.profile-small-btn:hover {
+  border-color: var(--border2);
+  background: var(--surface);
 }
 
 .profile-bio,
@@ -355,6 +409,13 @@ body.theme-light .header { background: var(--surface); }
   margin-top: 8px;
 }
 
+.profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 .profile-list {
   list-style: none;
   margin: 0;
@@ -374,6 +435,18 @@ body.theme-light .header { background: var(--surface); }
   margin-bottom: 4px;
   font-weight: 800;
   color: var(--text);
+}
+
+.profile-setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-setting-item strong {
+  color: var(--text);
+  font-size: 13px;
 }
 
 /* grid */

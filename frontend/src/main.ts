@@ -15,10 +15,27 @@ type Profile = {
   name: string;
   title: string;
   bio: string;
+  status: string;
+  location: string;
+  favoriteGame: string;
   dateJoined: string;
   level: number;
   totalHoursPlayed: number;
+  friendsOnline: number;
+  favoriteTags: string[];
   comments: string[];
+  wishlist: {
+    title: string;
+    note: string;
+  }[];
+  activity: {
+    title: string;
+    description: string;
+  }[];
+  privacySettings: {
+    label: string;
+    value: string;
+  }[];
   achievements: {
     title: string;
     description: string;
@@ -73,13 +90,56 @@ const PLACEHOLDER_PROFILE: Profile = {
   name: "Placeholder Name",
   title: "Placeholder community member",
   bio: "Front-end placeholder profile for a player who tests builds, leaves feedback, and keeps an eye on every new drop on the platform.",
+  status: "Looking for playtest feedback",
+  location: "Rudimentary Campus",
+  favoriteGame: "Bullet Hell",
   dateJoined: "March 12, 2024",
   level: 18,
   totalHoursPlayed: 412,
+  friendsOnline: 7,
+  favoriteTags: ["Action", "Indie", "Co-op", "Tools"],
   comments: [
     "Really clean launcher flow. Would love game-specific update notes next.",
     "The latest build boots fast and the library view feels much better now.",
     "Please keep the earthy theme. It gives the platform its own identity.",
+  ],
+  wishlist: [
+    {
+      title: "Doom Clone",
+      note: "Waiting for the next enemy update.",
+    },
+    {
+      title: "Clicker Game",
+      note: "Saving this one for a quick break.",
+    },
+  ],
+  activity: [
+    {
+      title: "Reviewed a build",
+      description: "Left notes on the latest Bullet Hell update.",
+    },
+    {
+      title: "Added a wishlist item",
+      description: "Saved Doom Clone for later testing.",
+    },
+    {
+      title: "Updated profile details",
+      description: "Set a status and favorite game for the profile page.",
+    },
+  ],
+  privacySettings: [
+    {
+      label: "Profile Visibility",
+      value: "Friends can view",
+    },
+    {
+      label: "Comments",
+      value: "Open",
+    },
+    {
+      label: "Activity Feed",
+      value: "Visible",
+    },
   ],
   achievements: [
     {
@@ -334,6 +394,43 @@ function renderProfilePage(profile: Profile) {
     )
     .join("");
 
+  const wishlistHtml = profile.wishlist
+    .map(
+      (item) => `
+        <li class="profile-list-item">
+          <div class="profile-list-title">${escapeHtml(item.title)}</div>
+          <p class="profile-list-copy">${escapeHtml(item.note)}</p>
+        </li>
+      `
+    )
+    .join("");
+
+  const activityHtml = profile.activity
+    .map(
+      (activityItem) => `
+        <li class="profile-list-item">
+          <div class="profile-list-title">${escapeHtml(activityItem.title)}</div>
+          <p class="profile-list-copy">${escapeHtml(activityItem.description)}</p>
+        </li>
+      `
+    )
+    .join("");
+
+  const privacySettingsHtml = profile.privacySettings
+    .map(
+      (setting) => `
+        <li class="profile-list-item profile-setting-item">
+          <span>${escapeHtml(setting.label)}</span>
+          <strong>${escapeHtml(setting.value)}</strong>
+        </li>
+      `
+    )
+    .join("");
+
+  const tagsHtml = profile.favoriteTags
+    .map((tag) => `<span class="profile-tag">${escapeHtml(tag)}</span>`)
+    .join("");
+
   layoutCenter.innerHTML = `
     <section class="panel center-panel profile-panel">
       <div class="panel-title">My Profile</div>
@@ -346,6 +443,18 @@ function renderProfilePage(profile: Profile) {
             <div class="profile-kicker">Placeholder User</div>
             <h2 class="profile-name">${escapeHtml(profile.name)}</h2>
             <p class="profile-role">${escapeHtml(profile.title)}</p>
+
+            <div class="profile-meta">
+              <span>${escapeHtml(profile.status)}</span>
+              <span>${escapeHtml(profile.location)}</span>
+              <span>Favorite: ${escapeHtml(profile.favoriteGame)}</span>
+            </div>
+
+            <div class="profile-actions" aria-label="Profile actions">
+              <button class="btn profile-action-btn" type="button" data-profile-action="Edit bio">Edit Bio</button>
+              <button class="btn profile-action-btn" type="button" data-profile-action="Change avatar">Change Avatar</button>
+              <button class="btn profile-action-btn" type="button" data-profile-action="Share profile">Share Profile</button>
+            </div>
           </div>
         </section>
 
@@ -370,18 +479,37 @@ function renderProfilePage(profile: Profile) {
             <div class="profile-stat-value">${profile.totalHoursPlayed.toLocaleString()}</div>
             <div class="profile-stat-footnote">Platform total</div>
           </article>
+
+          <article class="profile-stat">
+            <div class="profile-stat-label">Friends Online</div>
+            <div class="profile-stat-value">${profile.friendsOnline.toLocaleString()}</div>
+          </article>
         </section>
 
         <section class="profile-grid">
           <article class="profile-card profile-card-wide">
-            <div class="profile-section-title">Bio</div>
+            <div class="profile-section-header">
+              <div class="profile-section-title">Bio</div>
+              <button class="profile-small-btn" type="button" data-profile-action="Edit bio">Edit</button>
+            </div>
             <p class="profile-bio">${escapeHtml(profile.bio)}</p>
+            <div class="profile-tags" aria-label="Favorite tags">${tagsHtml}</div>
           </article>
 
           <article class="profile-card">
             <div class="profile-section-title">Date Joined</div>
             <div class="profile-detail-value">${escapeHtml(profile.dateJoined)}</div>
             <p class="profile-detail-copy">Member since the early placeholder era of Rudimentary Steam.</p>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Wishlist</div>
+            <ul class="profile-list">${wishlistHtml}</ul>
+          </article>
+
+          <article class="profile-card profile-card-wide">
+            <div class="profile-section-title">Recent Activity</div>
+            <ul class="profile-list">${activityHtml}</ul>
           </article>
 
           <article class="profile-card">
@@ -393,10 +521,23 @@ function renderProfilePage(profile: Profile) {
             <div class="profile-section-title">Achievements</div>
             <ul class="profile-list">${achievementsHtml}</ul>
           </article>
+
+          <article class="profile-card profile-card-wide">
+            <div class="profile-section-header">
+              <div class="profile-section-title">Privacy</div>
+              <button class="profile-small-btn" type="button" data-profile-action="Open privacy settings">Manage</button>
+            </div>
+            <ul class="profile-list">${privacySettingsHtml}</ul>
+          </article>
         </section>
       </div>
     </section>
   `;
+
+  document.querySelectorAll<HTMLButtonElement>("[data-profile-action]").forEach((button) => {
+    const action = button.dataset.profileAction ?? "Profile action";
+    button.addEventListener("click", () => alert(`${action} (placeholder)`));
+  });
 }
 
 function handleNavAction(action: string) {
