@@ -36,10 +36,6 @@ describe("testing suite for rudimentary steam", () => {
     setupDom();
   });
 
-  // black box unit test
-  // requirement that is being tested:
-  // the search feature filters listings by text the user types
-  // without needing to know how the filtering is implemented internally
   it("filters listings correctly based on user search input", async () => {
     const app = await import("./main");
     const search = document.getElementById("search") as HTMLInputElement;
@@ -67,29 +63,6 @@ describe("testing suite for rudimentary steam", () => {
     expect(cards.length).toBe(4);
   });
 
-  // white box unit test
-  // coverage kind provided:
-  // 100% branch coverage for the branch inside applyTheme
-  //
-  // what is being tested:
-  // function applyTheme(theme: Theme) {
-  //   document.body.classList.remove("theme-dark", "theme-light");
-  //   document.body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
-  //   localStorage.setItem("theme", theme);
-  //
-  //   const btn = document.getElementById("theme-toggle") as HTMLButtonElement | null;
-  //   if (btn) {
-  //     if (theme === "dark") {
-  //       btn.textContent = "🌙";
-  //       btn.setAttribute("aria-label", "Switch to light theme");
-  //       btn.title = "Switch to light theme";
-  //     } else {
-  //       btn.textContent = "☀️";
-  //       btn.setAttribute("aria-label", "Switch to dark theme");
-  //       btn.title = "Switch to dark theme";
-  //     }
-  //   }
-  // }
   it("covers both dark and light branches of applyTheme", async () => {
     const app = await import("./main");
     const btn = document.getElementById("theme-toggle") as HTMLButtonElement;
@@ -98,20 +71,17 @@ describe("testing suite for rudimentary steam", () => {
     expect(document.body.classList.contains("theme-dark")).toBe(true);
     expect(document.body.classList.contains("theme-light")).toBe(false);
     expect(localStorage.getItem("theme")).toBe("dark");
-    expect(btn.textContent).toBe("🌙");
+    expect(btn.textContent).toBe("Light");
     expect(btn.getAttribute("aria-label")).toBe("Switch to light theme");
 
     app.applyTheme("light");
     expect(document.body.classList.contains("theme-light")).toBe(true);
     expect(document.body.classList.contains("theme-dark")).toBe(false);
     expect(localStorage.getItem("theme")).toBe("light");
-    expect(btn.textContent).toBe("☀️");
+    expect(btn.textContent).toBe("Dark");
     expect(btn.getAttribute("aria-label")).toBe("Switch to dark theme");
   });
 
-  // integration test
-  // units being tested together:
-  // applySearch + renderListings + renderDrawer + setDrawerOpen
   it("search results, card selection, drawer rendering, and drawer closing work together", async () => {
     const app = await import("./main");
 
@@ -149,7 +119,7 @@ describe("testing suite for rudimentary steam", () => {
     app.handleNavAction("profile");
 
     expect(layoutCenter.textContent).toContain("My Profile");
-    expect(layoutCenter.textContent).toContain("Placeholder User");
+    expect(layoutCenter.textContent).toContain("Demo Account");
     expect(layoutCenter.textContent).toContain("Bio");
     expect(layoutCenter.textContent).toContain("Date Joined");
     expect(layoutCenter.textContent).toContain("Level");
@@ -157,6 +127,15 @@ describe("testing suite for rudimentary steam", () => {
     expect(layoutCenter.textContent).toContain("Achievements");
     expect(layoutCenter.textContent).toContain("Hours Played");
     expect(layoutCenter.textContent).toContain("March 12, 2024");
-    expect(layoutCenter.textContent).toContain("Placeholder Name");
+    expect(layoutCenter.textContent).toContain("Student Player");
+    expect(layoutCenter.textContent).toContain("Working on profile features");
+    expect(layoutCenter.textContent).toContain("Favorite Game");
+    expect(layoutCenter.textContent).toContain("Wishlist");
+    expect(layoutCenter.textContent).toContain("Recent Activity");
+
+    const editBioButton = document.getElementById("edit-bio-btn") as HTMLButtonElement;
+    editBioButton.click();
+
+    expect(alert).toHaveBeenCalledWith("Edit bio is not connected yet.");
   });
 });
