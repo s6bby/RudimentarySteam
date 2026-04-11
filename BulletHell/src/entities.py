@@ -1,9 +1,12 @@
+import math
+import random
+
 import pygame
 from settings import settings
 class Entity:
     def __init__(self, xpos, ypos):
         self.position = pygame.Vector2(xpos, ypos)
-    def update(self, screen, dt):
+    def update(self, targetposition, screen, dt, entityManager):
         pass
     def draw(self, screen):
         pass
@@ -21,12 +24,12 @@ class Player(Entity):
         self.settings = settings
         self.color = settings.theme["player"]
 
-    def update(self, screen, dt, enemies):       
+    def update(self, targetposition, screen, dt, entityManager):
         self.move(dt)
-        self.checkCollisions(enemies, screen, dt)
-        self.shoot(screen, dt)         
+        self.checkCollisions(entityManager, screen, dt)
+        self.shoot(screen, dt, entityManager)
 
-    def checkCollisions(self, enemies, screen, dt):
+    def checkCollisions(self, entityManager, screen, dt):
         self.healthTimer += dt
         if self.position.x - self.radius < 0:
             self.position.x = self.radius
@@ -37,23 +40,21 @@ class Player(Entity):
         if self.position.y + self.radius > screen.get_height():
             self.position.y = screen.get_height() - self.radius
 
-
-        for enemy in enemies:
-            distance = self.position.distance_to(enemy.position)     
-            if distance < (self.radius + 50) and self.healthTimer >= 1/3:
-                self.health -= 10
-                self.healthTimer = 0
-    def shoot(self, screen, dt):
+        
+        for enemy in entityManager.entities:
+            if isinstance(enemy, Enemy)and not isinstance(enemy, PlayerBullet):
+                distance = self.position.distance_to(enemy.position)     
+                if distance < (self.radius + enemy.radius) and self.healthTimer >= 1/3:
+                    self.health -= 10
+                    self.healthTimer = 0
+                    if isinstance(enemy, Bullet):
+                        entityManager.remove(enemy)
+    def shoot(self, screen, dt, entityManager):
         keysPressed = pygame.key.get_pressed()
         self.shootTimer += dt
         if keysPressed[pygame.K_SPACE] and self.shootTimer >= 0.25:
             self.shootTimer = 0
-            self.bullets.append(Bullet(self.position, pygame.mouse.get_pos()))
-        for bullet in self.bullets[:]:
-            if not bullet.update(screen, dt):
-                self.bullets.remove(bullet)
-            else:
-                bullet.draw(screen)
+            entityManager.add(PlayerBullet(self.position, pygame.mouse.get_pos()))
     def move(self, dt):
         velocity = pygame.Vector2(0, 0)
         keysPressed = pygame.key.get_pressed()
@@ -86,17 +87,17 @@ class Glob(Enemy):
         self.speed = 30
         self.bullets = []
         self.shootTimer = 0
-    def update(self, targetposition, screen, dt):
+        self.radius = 50
+        self.health = 30
+    def update(self, targetposition, screen, dt, entityManager):
         self.path(targetposition, dt)
+        self.checkCollisions(entityManager, screen, dt)
         self.shootTimer += dt
+        if self.health <= 0:
+            entityManager.remove(self)
         if self.shootTimer >= 1:
             self.shootTimer = 0
-            self.bullets.append(self.shoot(targetposition))
-        for bullet in self.bullets[:]:
-            if not bullet.update(screen, dt):
-                self.bullets.remove(bullet)
-            else:
-                bullet.draw(screen)
+            entityManager.add(self.shoot(targetposition))
     def draw(self, screen):
         pygame.draw.circle(screen, "red", self.position, 50)
     def path(self,targetposition, dt):
@@ -104,21 +105,72 @@ class Glob(Enemy):
         if length.magnitude() != 0:
             length.normalize_ip()
             self.position += length * self.speed * dt
+    def checkCollisions(self, entityManager, screen, dt):
+        for bullet in entityManager.entities:
+            if isinstance(bullet, PlayerBullet):
+                distance = self.position.distance_to(bullet.position)     
+                if distance < (self.radius + bullet.radius):
+                    self.health -= 10
+                    entityManager.remove(bullet)
     def shoot(self, targetposition):
         return Bullet(self.position, targetposition)
 
-class Bullet(Entity):
+class Bullet(Enemy):
     def __init__(self, position, targetposition):
         super().__init__(position[0], position[1])
         self.speed = 200
+        self.radius = 10
         travelVector = pygame.Vector2(targetposition - self.position)
         if travelVector.magnitude() != 0:
             travelVector.normalize_ip()
             self.velocity = pygame.Vector2(travelVector * self.speed)
-    def update(self, screen, dt):
+    def update(self, targetposition, screen, dt, entityManager):
         self.position += self.velocity * dt
         if self.position.x > screen.get_width() or self.position.x < 0 or self.position.y > screen.get_height() or self.position.y < 0:
-            return False
-        return True
+            entityManager.remove(self)
+            
     def draw(self, screen):
         pygame.draw.circle(screen, settings.theme["bullet"], self.position, 10)
+
+class PlayerBullet(Bullet):
+    def __init__(self, position, targetposition):
+        super().__init__(position, targetposition)
+        self.color = settings.theme["player_bullet"]
+        
+        
+        
+
+        
+class GlobSpawner(Entity):
+    def __init__(self, entityManager):
+        self.spawnTimer = 0
+        self.entityManager = entityManager
+    def update(self, targetposition, screen, dt, entityManager):
+        self.spawnTimer += dt
+        if self.spawnTimer >= 5:
+            self.spawnTimer = 0
+            newGlob = Glob(random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
+            self.entityManager.add(newGlob)
+            
+            
+class EntityManager:
+    def __init__(self):
+        self.entities = []
+        self.player = None
+    def add(self, entity):
+        self.entities.append(entity)
+    def remove(self, entity):
+        if entity in self.entities:
+            self.entities.remove(entity)
+    def update(self, screen, dt):
+        if self.player is None:
+            for entity in self.entities:
+                if isinstance(entity, Player):
+                    self.player = entity
+                    break
+        for entity in self.entities:
+            entity.update(self.player.position, screen, dt, self)
+    def draw(self, screen):
+        for entity in self.entities:
+            entity.draw(screen)
+

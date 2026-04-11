@@ -1,6 +1,12 @@
+import math
+
 import pygame
 from settings import settings, themes
-from entities import Player, Enemy, Glob
+from entities import Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
+
+
+
+
 
 
 class FPSCounter:
@@ -78,22 +84,23 @@ class PlayScene(Scene):
     def __init__(self):
         super().__init__()
         self.player = Player(400,300)
-        self.glob = Glob(100,100)
-        self.enemies = [self.glob]
+        self.entityManager = EntityManager()
+        self.globSpawner = GlobSpawner(self.entityManager)
+        self.entityManager.add(self.globSpawner)
+        self.entityManager.add(self.player)
+        self.enemies = []
     def update(self, screen, events, dt):
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         return MainMenu()
-            self.player.update(screen, dt, self.enemies)
-            self.glob.update(self.player.position, screen, dt)
+            self.entityManager.update(screen, dt)
             if self.player.health <= 0:
                 return MainMenu()
             return self
     def draw(self, screen):
         screen.fill("black")
-        self.player.draw(screen)
-        self.glob.draw(screen)
+        self.entityManager.draw(screen)
         return self
 
 class SettingsScene(Scene):
