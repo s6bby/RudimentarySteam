@@ -1,17 +1,27 @@
-## Installation
+# Installing and Running Backend
 
-Install [Node.js](https://nodejs.org/en/download)
+### This requires a MySql Database running locally on your system
 
-Install typescript with `npm install -g typescript`
+### Create .venv in ./src
+Windows/macOS/Linux: `python -m venv .venv` \
+Note: You may have to use `python3`
 
-In the `./BackEnd` directory `npm install express`
+### Install modules in venv
+`pip install mysql-connector` \
+`pip install flask`
 
-## Run Commands
+### Create Database
+`python create_database.py` follow prompts
 
-`npx ts-node client.ts`
+### Run Server
+`python server.py`
 
-`npx ts-node server.ts`
+### Current support
+#### Gets
 
-## Run Tests
+- [x] /api/applications
 
-`npm test`
+#### Posts
+
+### Schema diagram for reference and feedback
+![Schema Diagram](./Schema.png)

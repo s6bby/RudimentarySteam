@@ -1,0 +1,1 @@
+insert into applications (name, version, rating) values (%s, %s, %s);
