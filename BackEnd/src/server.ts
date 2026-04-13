@@ -1,6 +1,6 @@
 import express from 'express';
 import { Data, DataSchema } from './data';
-import { loadFromJsonFile } from './json-manipulation';
+import { saveToJsonFile, loadFromJsonFile } from './json-manipulation';
 import { z } from "zod";
 
 
@@ -48,6 +48,19 @@ async function main()
       return;
     }
     res.json(user);
+  });
+
+  app.post('/add/user', express.json(), (req, res) =>
+  {
+    const { userId, username, email } = req.body;
+    if (typeof userId !== 'number' || typeof username !== 'string' || typeof email !== 'string') 
+    {
+      res.status(400).json({ error: 'Invalid user data' });
+      return;
+    }
+    data.addUser(userId, username, email);
+    res.status(201).json({ userId, username, email });
+    saveToJsonFile(data);
   });
 
 
