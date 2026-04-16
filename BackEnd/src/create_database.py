@@ -1,0 +1,60 @@
+import mysql.connector
+
+DATABASE_NAME = "Rudimentary_Steam_DB"
+
+def main():
+    print("Hit Enter to use default values for MySQL connection parameters.")
+    host = input("Enter MySQL host (Default: localhost): ") or "localhost"
+    port = input("Enter MySQL port (Default: 3306): ") or "3306"
+    user = input("Enter MySQL username (Default: root): ") or "root"
+    password = input("Enter MySQL password (Default: None): ") or ""
+
+    create_database(host, port, user, password)
+
+def execute_sql_file(filename, connection):
+    cursor = connection.cursor()
+    
+    with open(filename, 'r') as f:
+        sql_commands = f.read().split(';')
+
+    for command in sql_commands:
+        try:
+            if command.strip():
+                cursor.execute(command)
+        except mysql.connector.Error as err:
+            print(f"Skipped command due to error: {err}")
+
+    connection.commit()
+    cursor.close()
+
+def create_database(host, port, user, password):
+    mydb = None
+    cursor = None
+    try:
+        mydb = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            port=int(port)
+        )
+
+        cursor = mydb.cursor()
+
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}")
+
+        cursor.execute(f"USE {DATABASE_NAME}")
+        
+        execute_sql_file('./createTables.sql', mydb)
+
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if mydb is not None:
+            mydb.close()
+
+if __name__ == "__main__":
+    main()
