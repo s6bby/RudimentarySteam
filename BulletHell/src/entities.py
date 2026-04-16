@@ -158,12 +158,14 @@ class EntityManager:
         self.entities = []
         self.player = None
         self.mouse_world_pos = pygame.Vector2(0, 0)
+        self.tileMap = TileMap()
     def add(self, entity):
         self.entities.append(entity)
     def remove(self, entity):
         if entity in self.entities:
             self.entities.remove(entity)
     def update(self, screen, dt):
+        self.tileMap.update(dt)
         if self.player is None:
             for entity in self.entities:
                 if isinstance(entity, Player):
@@ -172,7 +174,36 @@ class EntityManager:
         for entity in self.entities:
             entity.update(self.player.position, screen, dt, self)
     def draw(self, screen, camera):
+        self.tileMap.draw(screen, camera)
         for entity in self.entities:
             entity.draw(screen, camera)
 
+class TileMap:
+    def __init__(self, tileSize=256):
+        self.tileSize = tileSize
+        # Simplified: 0 = empty, 1 = wall
+        self.map_data = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ]
+
+    def update(self, dt):
+        pass # Most tiles don't need updates
+
+    def draw(self, screen, camera):
+        # Calculate which tiles are actually on screen (Culling)
+        # Only draw what the camera can see!
+        for row_index, row in enumerate(self.map_data):
+            for col_index, tile in enumerate(row):
+                if tile == 1:
+                    # Apply camera offset
+                    pos = camera.apply_rect(pygame.Rect(
+                        col_index * self.tileSize, 
+                        row_index * self.tileSize, 
+                        self.tileSize, self.tileSize
+                    ))
+                    pygame.draw.rect(screen, (50, 50, 50), pos)
 

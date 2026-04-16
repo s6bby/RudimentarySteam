@@ -1,3 +1,4 @@
+from cmath import rect
 import math
 
 import pygame
@@ -167,6 +168,10 @@ class Camera:
 
     def apply(self, entity):
         return entity.position - pygame.Vector2(self.camera.topleft)
+    
+    def apply_rect(self, rect):
+        # Returns a new Rect shifted by the camera offset
+        return rect.move(-self.camera.x, -self.camera.y)
 
     def update(self, target):
         # Center the camera on the player (target)
@@ -175,3 +180,5 @@ class Camera:
         
 
         self.camera = pygame.Rect(x, y, self.width, self.height)
+
+
