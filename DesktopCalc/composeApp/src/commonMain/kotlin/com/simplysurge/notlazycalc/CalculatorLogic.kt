@@ -14,8 +14,23 @@ class CalculatorLogic {
     var displayText by mutableStateOf("0")
 
     private fun syncDisplay() {
-        val current = tokens.joinToString(" ")
-        displayText = current.ifEmpty { "0" }
+        val current = tokens.joinToString(" ").ifEmpty { "0" }
+
+        displayText = current.split(" ").joinToString(" ") { part ->
+            if (part.length > 12 && part.toBigDecimalOrNull() != null) {
+                formatToScientific(part)
+            } else {
+                part
+            }
+        }
+    }
+
+    private fun formatToScientific(input: String): String {
+        val number = input.toBigDecimalOrNull() ?: return input
+
+        val raw = "%.6E".format(number)
+
+        return raw.replace("E-0", "E-").replace("E0", "E")
     }
 
     fun onNumClick(digit: String) {
@@ -114,10 +129,16 @@ class CalculatorLogic {
             if (result is java.math.BigDecimal) {
                 val formattedResult = result.stripTrailingZeros().toPlainString()
 
+                val finalResult = if (formattedResult.length > 12) {
+                    "%.6E".format(result)
+                } else {
+                    formattedResult
+                }
+
                 operationText = tokens.joinToString(" ") + " ="
 
                 tokens.clear()
-                tokens.add(formattedResult)
+                tokens.add(finalResult)
                 syncDisplay()
             }
         } catch (e: Exception) {
