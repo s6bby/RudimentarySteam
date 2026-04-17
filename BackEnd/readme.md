@@ -14,7 +14,7 @@ Note: You may have to use `python3`
 `python create_database.py` follow prompts
 
 ### Run Server
-You must change line 10 to be your own database password!
+You must change line 10 to be your own database password! \
 `python server.py`
 
 ### Current API Support
