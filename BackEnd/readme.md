@@ -7,37 +7,32 @@ Windows/macOS/Linux: `python -m venv .venv` \
 Note: You may have to use `python3`
 
 ### Install modules in venv
-`pip install mysql-connector` \
+`pip install mysql-connector-python` \
 `pip install flask`
 
-<<<<<<< HEAD
 ### Create Database
 `python create_database.py` follow prompts
 
 ### Run Server
+You must change line 10 to be your own database password! \
 `python server.py`
-=======
-## Running the Server
->>>>>>> main
 
-### Current support
-#### Gets
-
-<<<<<<< HEAD
-- [x] /api/applications
-=======
 ### Current API Support
 
 #### GET requests
 
-- `/` Hello World test
-- `/applications` returns a list of applications in database
-- `/users` returns a list of users in database
-- `/user/:id` returns a user with id
+- `/api/applications` returns a list of applications in database
+- `/api/application?id` returns a user with id
+    - try it: `curl http://localhost:5000/api/application?id=12`
+- `/api/users` returns a list of users in database
+- `/api/user?id` returns a user with id
+
 
 #### POST requests
-- `/add/user` Given valid JSON for a user will add a user
-    - try it out with `curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d '{"userId": 3, "username": "UserThree", "email": "userthree@example.com"}'`
+- `/api/user` Given valid JSON for a user will add a user
+    - try it: `curl -X POST http://localhost:5000/api/user -H "Content-Type: application/json" -d '{"username": "UserThree", "email": "userthree@example.com","hashed_password": "password"}'`
+- `/api/application` Given valid JSON for a user will add a user
+    - try it: `curl -X POST http://localhost:5000/api/application -H "Content-Type: application/json" -d '{"name": "app1", "release_date": "2026-04-16","description": "This is an app.", "path": "This will not be in later commands"}'`
 
 #### Feature plans
 - User login
@@ -45,11 +40,6 @@ Note: You may have to use `python3`
 - Executable download
 
 #### Note - example data is in `./data/data.json`
-
-## Run Tests
->>>>>>> main
-
-#### Posts
 
 ### Schema diagram for reference and feedback
 ![Schema Diagram](./Schema.png)

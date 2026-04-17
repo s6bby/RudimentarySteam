@@ -44,7 +44,7 @@ def create_database(host, port, user, password):
 
         cursor.execute(f"USE {DATABASE_NAME}")
         
-        execute_sql_file('./createTables.sql', mydb)
+        execute_sql_file('../sql/createTables.sql', mydb)
 
 
     except mysql.connector.Error as err:
