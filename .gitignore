@@ -1,6 +1,7 @@
 bin/*
 *.o
 .vscode/*
-Pythongame/.venv
+BulletHell/.venv
 __pycache__/
 .venv-files | grep node_modules
+

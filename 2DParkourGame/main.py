@@ -41,6 +41,50 @@ class Scene:
     def update(self, dt): pass
     def draw(self, screen): pass
 
+class Spike:
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+
+    def draw(self, screen, camera_x):
+        pygame.draw.polygon(
+            screen,
+            colors["red"],
+            [
+                (self.rect.x - camera_x, self.rect.bottom),
+                (self.rect.centerx - camera_x, self.rect.top),
+                (self.rect.right - camera_x, self.rect.bottom)
+            ]
+        )
+
+class Projectile:
+    def __init__(self, x, y, direction):
+        self.rect = pygame.Rect(x, y, 10, 10)
+        self.speed = 500
+        self.direction = direction
+
+    def update(self, dt):
+        self.rect.x += self.speed * self.direction * dt
+
+    def draw(self, screen, camera_x):
+        pygame.draw.rect(
+            screen,
+            colors["green"],
+            (self.rect.x - camera_x, self.rect.y, 10, 10)
+        )
+
+class Checkpoint:
+    def __init__(self, rect):
+        self.rect = pygame.Rect(rect)
+        self.activated = False
+
+    def draw(self, screen, camera_x):
+        color = (0, 255, 255) if not self.activated else (255, 255, 0)
+        pygame.draw.rect(
+            screen,
+            color,
+            (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height)
+        )
+
 class Platform:
     def __init__(self, rect, moving=False, move_range=0, speed=0):
         self.rect = pygame.Rect(rect)
@@ -86,12 +130,25 @@ class GameScene(Scene):
         self.player = pygame.Rect(100, h - 150, 50, 50)
         self.player_vel = pygame.Vector2(0, 0)
 
+        self.max_health = 3
+        self.health = self.max_health
+        self.invincible_timer = 0
+        self.invincible_duration = 1
+
         self.gravity = 1500
         self.move_speed = 400
         self.jump_strength = -700
         self.on_ground = False
 
         self.camera_x = 0
+
+        self.dash_speed = 1200
+        self.dash_time = 0.15
+        self.dash_timer = 0
+        self.dash_cooldown = 0.5
+        self.dash_cooldown_timer = 0
+        self.dashing = False
+        self.facing = 1
 
         self.platforms = [
             Platform((0, h - 100, w * 3, 100)),
@@ -101,10 +158,23 @@ class GameScene(Scene):
             Platform((1500, h - 300, 250, 20), moving=True, move_range=200, speed=150),
         ]
 
+        self.spikes = [
+            Spike((500, h - 120, 40, 20)),
+            Spike((540, h - 120, 40, 20)),
+            Spike((580, h - 120, 40, 20))
+        ]
+
         self.enemies = [
             {"rect": pygame.Rect(600, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
             {"rect": pygame.Rect(1200, h - 150, 50, 50), "vel": pygame.Vector2(0, 0)},
         ]
+
+        self.checkpoints = [
+            Checkpoint((300, h - 150, 30, 50)),
+            Checkpoint((1000, h - 200, 30, 50)),
+        ]
+
+        self.spawn_point = (100, h - 150)
 
         middle_platform = self.platforms[2].rect
         self.jumping_enemy = {
@@ -119,6 +189,27 @@ class GameScene(Scene):
         }
 
         self.level_end = pygame.Rect(2000, h - 200, 100, 100)
+
+        self.shooters = [
+            {
+                "rect": pygame.Rect(1700, h - 150, 50, 50),
+                "cooldown": 0
+            }
+        ]
+
+        self.projectiles = []
+
+    def take_damage(self, amount=1):
+        if self.invincible_timer > 0:
+            return
+
+        self.health -= amount
+        self.invincible_timer = self.invincible_duration
+
+        if self.health <= 0:
+            self.player.topleft = self.spawn_point
+            self.player_vel = pygame.Vector2(0, 0)
+            self.health = self.max_health
 
     def move_and_collide(self, rect, velocity, dt):
         previous_rect = rect.copy()
@@ -146,24 +237,66 @@ class GameScene(Scene):
 
         return grounded
 
+    def try_jump(self):
+        if self.on_ground:
+            self.player_vel.y = self.jump_strength
+
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                self.try_jump()
+
+            if event.key == pygame.K_f and self.dash_cooldown_timer <= 0:
+                self.dashing = True
+                self.dash_timer = self.dash_time
+                self.dash_cooldown_timer = self.dash_cooldown
+
+                direction = self.facing
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                    direction = -1
+                if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                    direction = 1
+
+                self.player_vel.x = direction * self.dash_speed
+                self.player_vel.y = 0
+
     def update(self, dt):
         keys = pygame.key.get_pressed()
 
-        self.player_vel.x = 0
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.player_vel.x = -self.move_speed
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.player_vel.x = self.move_speed
+        if self.invincible_timer > 0:
+            self.invincible_timer -= dt
 
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.player_vel.y = self.jump_strength
+        if not self.dashing:
+            self.player_vel.x = 0
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                self.player_vel.x = -self.move_speed
+                self.facing = -1
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                self.player_vel.x = self.move_speed
+                self.facing = 1
 
-        self.player_vel.y += self.gravity * dt
+        if self.dashing:
+            self.dash_timer -= dt
+            if self.dash_timer <= 0:
+                self.dashing = False
+
+        if self.dash_cooldown_timer > 0:
+            self.dash_cooldown_timer -= dt
+
+        if not self.dashing:
+            self.player_vel.y += self.gravity * dt
 
         for platform in self.platforms:
             platform.update(dt)
 
         self.on_ground = self.move_and_collide(self.player, self.player_vel, dt)
+
+        for checkpoint in self.checkpoints:
+            if self.player.colliderect(checkpoint.rect):
+                checkpoint.activated = True
+                self.spawn_point = checkpoint.rect.topleft
+
         self.camera_x = self.player.x - 300
 
         for enemy in self.enemies:
@@ -175,9 +308,8 @@ class GameScene(Scene):
 
             self.move_and_collide(rect, vel, dt)
 
-            if rect.colliderect(self.player):
-                self.player.topleft = (100, self.game.screen.get_height() - 150)
-                self.player_vel = pygame.Vector2(0, 0)
+            if self.player.colliderect(rect):
+                self.take_damage()
 
         rect = self.jumping_enemy["rect"]
         vel = self.jumping_enemy["vel"]
@@ -190,12 +322,32 @@ class GameScene(Scene):
         if grounded:
             vel.y = self.jumping_enemy["jump_strength"]
 
-        if rect.colliderect(self.player):
-            self.player.topleft = (100, self.game.screen.get_height() - 150)
-            self.player_vel = pygame.Vector2(0, 0)
-
         if self.player.colliderect(self.level_end):
             self.game.change_scene(LevelCompletionScene(self.game))
+
+        for shooter in self.shooters:
+            rect = shooter["rect"]
+
+            shooter["cooldown"] -= dt
+            if shooter["cooldown"] <= 0:
+                direction = -1 if self.player.centerx < rect.centerx else 1
+                self.projectiles.append(
+                    Projectile(rect.centerx, rect.centery, direction)
+                )
+                shooter["cooldown"] = 2
+
+        for projectile in self.projectiles[:]:
+            projectile.update(dt)
+
+            if projectile.rect.colliderect(self.player):
+                self.take_damage()
+                self.projectiles.remove(projectile)
+            elif projectile.rect.x < 0 or projectile.rect.x > 3000:
+                self.projectiles.remove(projectile)
+
+        for spike in self.spikes:
+            if self.player.colliderect(spike.rect):
+                self.take_damage()
 
     def draw(self, screen):
         screen.fill(colors["sky"])
@@ -210,14 +362,18 @@ class GameScene(Scene):
                  platform.rect.height)
             )
 
-        pygame.draw.rect(
-            screen,
-            colors["blue"],
-            (self.player.x - self.camera_x,
-             self.player.y,
-             50,
-             50)
-        )
+        if not (self.invincible_timer > 0 and int(self.invincible_timer * 10) % 2 == 0):
+            pygame.draw.rect(
+                screen,
+                colors["blue"],
+                (self.player.x - self.camera_x,
+                 self.player.y,
+                 50,
+                 50)
+            )
+
+        for i in range(self.health):
+            pygame.draw.rect(screen, (255, 0, 0), (20 + i * 40, 20, 30, 30))
 
         for enemy in self.enemies:
             pygame.draw.rect(
@@ -246,6 +402,25 @@ class GameScene(Scene):
              100,
              100)
         )
+
+        for spike in self.spikes:
+            spike.draw(screen, self.camera_x)
+
+        for checkpoint in self.checkpoints:
+            checkpoint.draw(screen, self.camera_x)
+
+        for shooter in self.shooters:
+            pygame.draw.rect(
+                screen,
+                colors["green"],
+                (shooter["rect"].x - self.camera_x,
+                 shooter["rect"].y,
+                 50,
+                 50)
+            )
+
+        for projectile in self.projectiles:
+            projectile.draw(screen, self.camera_x)
 
 class LevelCompletionScene(Scene):
     def __init__(self, game):

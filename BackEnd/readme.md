@@ -1,13 +1,55 @@
-## Installation
+# Installing and Running Backend
 
-Install [Node.js](https://nodejs.org/en/download)
+### This requires a MySql Database running locally on your system
 
-Install typescript with `npm install -g typescript`
+### Create .venv in ./src
+Windows/macOS/Linux: `python -m venv .venv` \
+Note: You may have to use `python3`
 
-In the `./BackEnd` directory `npm install express`
+### Install modules in venv
+`pip install mysql-connector` \
+`pip install flask`
 
-## Run Commands
+<<<<<<< HEAD
+### Create Database
+`python create_database.py` follow prompts
 
-`npx ts-node client.ts`
+### Run Server
+`python server.py`
+=======
+## Running the Server
+>>>>>>> main
 
-`npx ts-node server.ts`
+### Current support
+#### Gets
+
+<<<<<<< HEAD
+- [x] /api/applications
+=======
+### Current API Support
+
+#### GET requests
+
+- `/` Hello World test
+- `/applications` returns a list of applications in database
+- `/users` returns a list of users in database
+- `/user/:id` returns a user with id
+
+#### POST requests
+- `/add/user` Given valid JSON for a user will add a user
+    - try it out with `curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d '{"userId": 3, "username": "UserThree", "email": "userthree@example.com"}'`
+
+#### Feature plans
+- User login
+- User is able to download and leave reviews
+- Executable download
+
+#### Note - example data is in `./data/data.json`
+
+## Run Tests
+>>>>>>> main
+
+#### Posts
+
+### Schema diagram for reference and feedback
+![Schema Diagram](./Schema.png)
