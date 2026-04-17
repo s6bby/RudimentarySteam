@@ -23,7 +23,7 @@ You must change line 10 to be your own database password!
 
 - `/api/applications` returns a list of applications in database
 - `/api/application?id` returns a user with id
-    -try it: `curl http://localhost:5000/api/application?id=12`
+    - try it: `curl http://localhost:5000/api/application?id=12`
 - `/api/users` returns a list of users in database
 - `/api/user?id` returns a user with id
 
