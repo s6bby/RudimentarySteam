@@ -1,1 +1,1 @@
-insert into applications (name, version, rating) values (%s, %s, %s);
+insert into applications (name, release_date, description, path) values (%s, %s, %s, %s);
