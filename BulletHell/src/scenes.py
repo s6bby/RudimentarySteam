@@ -3,7 +3,7 @@ import math
 
 import pygame
 from settings import settings, themes
-from entities import Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
+from entities import GlorpSpawner, Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
 
 
 
@@ -87,7 +87,9 @@ class PlayScene(Scene):
         self.player = Player(400,300)
         self.entityManager = EntityManager()
         self.globSpawner = GlobSpawner(self.entityManager)
+        self.glorpSpawner = GlorpSpawner(self.entityManager)
         self.entityManager.add(self.globSpawner)
+        self.entityManager.add(self.glorpSpawner)
         self.entityManager.add(self.player)
         self.enemies = []
         self.camera = Camera(settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT)

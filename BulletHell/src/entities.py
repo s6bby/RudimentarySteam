@@ -95,11 +95,11 @@ class Glob(Enemy):
         self.shootTimer += dt
         if self.health <= 0:
             entityManager.remove(self)
-        if self.shootTimer >= 1:
+        if self.shootTimer >= 2:
             self.shootTimer = 0
             entityManager.add(self.shoot(targetposition))
     def draw(self, screen, camera):
-        pygame.draw.circle(screen, "red", camera.apply(self), 50)
+        pygame.draw.circle(screen, "red", camera.apply(self), self.radius)
     def path(self,targetposition, dt):
         length = targetposition - self.position
         if length.magnitude() != 0:
@@ -114,6 +114,29 @@ class Glob(Enemy):
                     entityManager.remove(bullet)
     def shoot(self, targetposition):
         return Bullet(self.position, targetposition)
+    
+class Glorp(Enemy):
+    def __init__(self, xpos, ypos):
+        super().__init__(xpos, ypos)
+        self.speed = 45
+        self.radius = 40
+        self.health = 50
+    def update(self, targetposition, screen, dt, entityManager):
+        self.path(targetposition, dt)
+    def draw(self, screen, camera):
+        pygame.draw.circle(screen, "blue", camera.apply(self), self.radius)
+    def path(self,targetposition, dt):
+        length = targetposition - self.position
+        if length.magnitude() != 0:
+            length.normalize_ip()
+            self.position += length * self.speed * dt
+    def checkCollisions(self, entityManager, screen, dt):
+        for bullet in entityManager.entities:
+            if isinstance(bullet, PlayerBullet):
+                distance = self.position.distance_to(bullet.position)     
+                if distance < (self.radius + bullet.radius):
+                    self.health -= 10
+                    entityManager.remove(bullet)
 
 class Bullet(Enemy):
     def __init__(self, position, targetposition):
@@ -147,10 +170,21 @@ class GlobSpawner(Entity):
         self.entityManager = entityManager
     def update(self, targetposition, screen, dt, entityManager):
         self.spawnTimer += dt
-        if self.spawnTimer >= 5:
+        if self.spawnTimer >= 5 and entityManager.getNumberOfEntities(Glob) < 6:
             self.spawnTimer = 0
             newGlob = Glob(random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
             self.entityManager.add(newGlob)
+            
+class GlorpSpawner(Entity):
+    def __init__(self, entityManager):
+        self.spawnTimer = 0
+        self.entityManager = entityManager
+    def update(self, targetposition, screen, dt, entityManager):
+        self.spawnTimer += dt
+        if self.spawnTimer >= 10 and entityManager.getNumberOfEntities(Glorp) < 3:
+            self.spawnTimer = 0
+            newGlorp = Glorp(random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
+            self.entityManager.add(newGlorp)
             
             
 class EntityManager:
@@ -177,6 +211,12 @@ class EntityManager:
         self.tileMap.draw(screen, camera)
         for entity in self.entities:
             entity.draw(screen, camera)
+    def getNumberOfEntities(self, entityType):
+        count = 0
+        for entity in self.entities:
+            if isinstance(entity, entityType):
+                count += 1
+        return count
 
 class TileMap:
     def __init__(self, tileSize=256):
