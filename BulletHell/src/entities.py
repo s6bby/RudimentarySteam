@@ -123,6 +123,9 @@ class Glorp(Enemy):
         self.health = 50
     def update(self, targetposition, screen, dt, entityManager):
         self.path(targetposition, dt)
+        self.checkCollisions(entityManager, screen, dt)
+        if self.health <= 0:
+            entityManager.remove(self)
     def draw(self, screen, camera):
         pygame.draw.circle(screen, "blue", camera.apply(self), self.radius)
     def path(self,targetposition, dt):
