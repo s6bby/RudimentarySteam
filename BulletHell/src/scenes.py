@@ -1,3 +1,4 @@
+from cmath import rect
 import math
 
 import pygame
@@ -89,18 +90,22 @@ class PlayScene(Scene):
         self.entityManager.add(self.globSpawner)
         self.entityManager.add(self.player)
         self.enemies = []
+        self.camera = Camera(settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT)
     def update(self, screen, events, dt):
+            self.entityManager.mouse_world_pos = pygame.mouse.get_pos() + pygame.Vector2(self.camera.camera.topleft)
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         return MainMenu()
             self.entityManager.update(screen, dt)
+            self.camera.update(self.player)
             if self.player.health <= 0:
                 return MainMenu()
             return self
+        
     def draw(self, screen):
         screen.fill("black")
-        self.entityManager.draw(screen)
+        self.entityManager.draw(screen, self.camera)
         return self
 
 class SettingsScene(Scene):
@@ -153,3 +158,27 @@ class SettingsScene(Scene):
         screen.blit(text4, (50, 200))
         text5 = font.render(f"Theme: {settings.theme}", True, "white")
         screen.blit(text5, (50, 250))
+        
+        
+class Camera:
+    def __init__(self, width, height):
+        self.camera = pygame.Rect(0, 0, width, height)
+        self.width = width
+        self.height = height
+
+    def apply(self, entity):
+        return entity.position - pygame.Vector2(self.camera.topleft)
+    
+    def apply_rect(self, rect):
+        # Returns a new Rect shifted by the camera offset
+        return rect.move(-self.camera.x, -self.camera.y)
+
+    def update(self, target):
+        # Center the camera on the player (target)
+        x = target.position.x - int(settings.SCREEN_WIDTH / 2)
+        y = target.position.y - int(settings.SCREEN_HEIGHT / 2)
+        
+
+        self.camera = pygame.Rect(x, y, self.width, self.height)
+
+
