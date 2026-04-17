@@ -7,25 +7,15 @@ Windows/macOS/Linux: `python -m venv .venv` \
 Note: You may have to use `python3`
 
 ### Install modules in venv
-`pip install mysql-connector` \
+`pip install mysql-connector-python` \
 `pip install flask`
 
-<<<<<<< HEAD
 ### Create Database
 `python create_database.py` follow prompts
 
 ### Run Server
 `python server.py`
-=======
-## Running the Server
->>>>>>> main
 
-### Current support
-#### Gets
-
-<<<<<<< HEAD
-- [x] /api/applications
-=======
 ### Current API Support
 
 #### GET requests
@@ -47,7 +37,6 @@ Note: You may have to use `python3`
 #### Note - example data is in `./data/data.json`
 
 ## Run Tests
->>>>>>> main
 
 #### Posts
 

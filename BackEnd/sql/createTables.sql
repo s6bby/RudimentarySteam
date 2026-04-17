@@ -14,9 +14,12 @@ create table if not exists users (
 );
 
 create table if not exists reviews (
-    user_id int primary key foreign key references users(user_id) on delete cascade,
-    app_id int primary key foreign key references applications(app_id) on delete cascade,
+    user_id int,
+    app_id int,
     rating int check (rating >= 1 and rating <= 10),
     comment text,
-    review_date date
+    review_date date,
+    primary key (user_id, app_id),
+    foreign key (user_id) references users(user_id) on delete cascade,
+    foreign key (app_id) references applications(app_id) on delete cascade
 );
