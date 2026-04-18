@@ -166,7 +166,7 @@ describe("testing suite for rudimentary steam", () => {
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     await vi.waitFor(() => {
-      expect(layoutCenter.textContent).toContain("Signed in as seb.");
+      expect(layoutCenter.textContent).toContain("Signed in as seb. User id: 1.");
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -177,11 +177,16 @@ describe("testing suite for rudimentary steam", () => {
           username: "seb",
           email: "seb@rudimentary.local",
           hashed_password: "demo",
+          bio: "",
+          avatar: "",
+          friend_list: "[]",
+          library: "[]",
         }),
       })
     );
     expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:5000/api/users");
     expect(localStorage.getItem("currentUser")).toContain('"username":"seb"');
+    expect(layoutCenter.textContent).toContain('"created_user_id": 1');
     expect(layoutCenter.textContent).toContain('"users"');
   });
 });

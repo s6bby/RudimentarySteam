@@ -69,7 +69,7 @@ The server runs at `http://127.0.0.1:5000`.
 ```sh
 curl -X POST http://localhost:5000/api/user \
   -H "Content-Type: application/json" \
-  -d '{"username":"UserThree","email":"userthree@example.com","hashed_password":"password"}'
+  -d '{"username":"UserThree","email":"userthree@example.com","hashed_password":"password","bio":"","avatar":"","friend_list":"[]","library":"[]"}'
 ```
 
 - `/api/application` adds an application.

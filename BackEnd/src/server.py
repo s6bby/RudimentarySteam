@@ -33,7 +33,15 @@ POST_QUERY_MAP = {
 }
 
 POST_FIELDS_MAP = {
-    "user": ["username", "email", "hashed_password"],
+    "user": [
+        "username",
+        "email",
+        "hashed_password",
+        "bio",
+        "avatar",
+        "friend_list",
+        "library"
+    ],
     "application": ["name", "release_date", "description", "path"]
 }
 

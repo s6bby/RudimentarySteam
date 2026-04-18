@@ -10,7 +10,11 @@ create table if not exists users (
     user_id int primary key auto_increment,
     username varchar(255) not null unique,
     email varchar(255) not null unique,
-    hashed_password varchar(255) not null
+    hashed_password varchar(255) not null,
+    bio text,
+    avatar varchar(255),
+    friend_list json,
+    `library` json
 );
 
 create table if not exists reviews (

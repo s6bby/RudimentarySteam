@@ -41,6 +41,13 @@ type SignInResponse = {
   users: unknown;
 };
 
+type SignInConsoleOutput = {
+  created_user_id: number;
+  created_user: BackendUser;
+  backend_response: unknown;
+  users: unknown;
+};
+
 const API_BASE_URL = "http://127.0.0.1:5000/api";
 
 const LISTINGS: Listing[] = [
@@ -487,6 +494,10 @@ async function postDemoUser(username: string, password: string): Promise<SignInR
       username,
       email,
       hashed_password: hashedPassword,
+      bio: "",
+      avatar: "",
+      friend_list: "[]",
+      library: "[]",
     }),
   });
 
@@ -560,9 +571,16 @@ function renderSignInPage() {
 
     try {
       const data = await postDemoUser(username, password);
+      const consoleOutput: SignInConsoleOutput = {
+        created_user_id: data.user.user_id,
+        created_user: data.user,
+        backend_response: data.created,
+        users: data.users,
+      };
+
       localStorage.setItem("currentUser", JSON.stringify(data.user));
-      status.textContent = `Signed in as ${data.user.username}.`;
-      jsonOutput.textContent = JSON.stringify(data, null, 2);
+      status.textContent = `Signed in as ${data.user.username}. User id: ${data.user.user_id}.`;
+      jsonOutput.textContent = JSON.stringify(consoleOutput, null, 2);
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "Sign in failed.";
     } finally {
