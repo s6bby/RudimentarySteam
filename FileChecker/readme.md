@@ -50,7 +50,8 @@ npm ci
 ## Running the Script
 
 ### Instructions:
-It's really simple, just locate the path to the item you want to send off to TotalVirus and plug it in as a command line argument.
+a. Locate the path to the item you want to send off to TotalVirus.
+b. Plug it in as a command line argument.
 
 Like so:
 ```bash
