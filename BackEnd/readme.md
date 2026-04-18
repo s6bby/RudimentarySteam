@@ -1,55 +1,80 @@
 # Installing and Running Backend
 
-### This requires a MySql Database running locally on your system
+This backend uses Flask with a local MySQL database.
 
-### Create .venv in ./src
-Windows/macOS/Linux: `python -m venv .venv` \
-Note: You may have to use `python3`
+## Prerequisites
 
-### Install modules in venv
-`pip install mysql-connector` \
-`pip install flask`
+- Python 3
+- MySQL running locally
 
-<<<<<<< HEAD
-### Create Database
-`python create_database.py` follow prompts
+## Create `.venv` in `BackEnd/src`
 
-### Run Server
-`python server.py`
-=======
-## Running the Server
->>>>>>> main
+```sh
+cd BackEnd/src
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-### Current support
-#### Gets
+## Install Modules
 
-<<<<<<< HEAD
-- [x] /api/applications
-=======
-### Current API Support
+```sh
+pip install mysql-connector flask
+```
 
-#### GET requests
+## Create Database
 
-- `/` Hello World test
-- `/applications` returns a list of applications in database
-- `/users` returns a list of users in database
-- `/user/:id` returns a user with id
+From `BackEnd/src`, run:
 
-#### POST requests
-- `/add/user` Given valid JSON for a user will add a user
-    - try it out with `curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d '{"userId": 3, "username": "UserThree", "email": "userthree@example.com"}'`
+```sh
+python create_database.py
+```
 
-#### Feature plans
-- User login
-- User is able to download and leave reviews
-- Executable download
+Press Enter at each prompt to use the local defaults:
 
-#### Note - example data is in `./data/data.json`
+- Host: `localhost`
+- Port: `3306`
+- User: `root`
+- Password: empty
 
-## Run Tests
->>>>>>> main
+## Run Server
 
-#### Posts
+From `BackEnd/src`, run:
 
-### Schema diagram for reference and feedback
+```sh
+python server.py
+```
+
+The server runs at `http://127.0.0.1:5000`.
+
+## Current API Support
+
+### GET Requests
+
+- `/api/applications` returns a list of applications in the database.
+- `/api/users` returns a list of users in the database.
+
+### POST Requests
+
+- `/api/add_user` adds a demo user.
+
+```sh
+curl -X POST http://127.0.0.1:5000/api/add_user \
+  -H "Content-Type: application/json" \
+  -d '{"username":"seb","password":"demo"}'
+```
+
+## Quick Check
+
+```sh
+curl http://127.0.0.1:5000/api/applications
+```
+
+An empty database returns:
+
+```json
+[]
+```
+
+## Schema Diagram
+
 ![Schema Diagram](./Schema.png)

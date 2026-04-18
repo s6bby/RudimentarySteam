@@ -29,6 +29,19 @@ type Profile = {
   }[];
 };
 
+type BackendUser = {
+  user_id: number;
+  username: string;
+  email: string;
+};
+
+type SignInResponse = {
+  user: BackendUser | null;
+  users: BackendUser[];
+};
+
+const API_BASE_URL = "http://127.0.0.1:5000/api";
+
 const LISTINGS: Listing[] = [
   {
     id: "1",
@@ -456,6 +469,89 @@ function renderProfilePage(profile: Profile) {
   editAvatarBtn?.addEventListener("click", () => alert("Avatar upload is not connected yet."));
 }
 
+async function postDemoUser(username: string, password: string): Promise<SignInResponse> {
+  const response = await fetch(`${API_BASE_URL}/add_user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Sign in failed");
+  }
+
+  return data as SignInResponse;
+}
+
+function renderSignInPage() {
+  setDrawerOpen(false);
+
+  layoutCenter.innerHTML = `
+    <section class="panel center-panel signin-panel">
+      <div class="panel-title">Sign in</div>
+      <div class="page-body">
+        <form id="signin-form" class="signin-form">
+          <label class="form-row">
+            <span>Username</span>
+            <input id="signin-username" class="form-input" name="username" autocomplete="username" required />
+          </label>
+
+          <label class="form-row">
+            <span>Password</span>
+            <input id="signin-password" class="form-input" name="password" type="password" autocomplete="current-password" />
+          </label>
+
+          <button id="signin-submit" class="btn signin-submit" type="submit">Sign in</button>
+        </form>
+
+        <p id="signin-status" class="signin-status">This adds a demo user through the backend.</p>
+        <pre id="signin-json" class="json-output">{}</pre>
+      </div>
+    </section>
+  `;
+
+  const form = needEl<HTMLFormElement>("signin-form");
+  const usernameInput = needEl<HTMLInputElement>("signin-username");
+  const passwordInput = needEl<HTMLInputElement>("signin-password");
+  const submitBtn = needEl<HTMLButtonElement>("signin-submit");
+  const status = needEl<HTMLParagraphElement>("signin-status");
+  const jsonOutput = needEl<HTMLPreElement>("signin-json");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username) {
+      status.textContent = "Add a username first.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    status.textContent = "Sending...";
+
+    try {
+      const data = await postDemoUser(username, password);
+      if (data.user) {
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        status.textContent = `Signed in as ${data.user.username}.`;
+      } else {
+        status.textContent = "Backend responded, but no user came back.";
+      }
+      jsonOutput.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : "Sign in failed.";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
 function handleNavAction(action: string) {
   setMobileMenuOpen(false);
 
@@ -488,6 +584,10 @@ function handleNavAction(action: string) {
       renderProfilePage(PLACEHOLDER_PROFILE);
       break;
 
+    case "signin":
+      renderSignInPage();
+      break;
+
     case "settings":
       renderPage(
         "Settings & Privacy",
@@ -509,7 +609,8 @@ function handleNavAction(action: string) {
       break;
 
     case "signout":
-      alert("Signed out (placeholder)");
+      localStorage.removeItem("currentUser");
+      renderSignInPage();
       break;
   }
 }
@@ -577,6 +678,8 @@ export {
   setMobileMenuOpen,
   renderPage,
   renderProfilePage,
+  renderSignInPage,
+  postDemoUser,
   handleNavAction,
 };
 

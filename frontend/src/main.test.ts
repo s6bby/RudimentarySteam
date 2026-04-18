@@ -138,4 +138,52 @@ describe("testing suite for rudimentary steam", () => {
 
     expect(alert).toHaveBeenCalledWith("Edit bio is not connected yet.");
   });
+
+  it("submits the sign in page to the backend user endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        user: {
+          user_id: 1,
+          username: "seb",
+          email: "seb@rudimentary.local",
+        },
+        users: [
+          {
+            user_id: 1,
+            username: "seb",
+            email: "seb@rudimentary.local",
+          },
+        ],
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const app = await import("./main");
+    const layoutCenter = document.querySelector(".layout-center") as HTMLElement;
+
+    app.renderSignInPage();
+
+    const username = document.getElementById("signin-username") as HTMLInputElement;
+    const password = document.getElementById("signin-password") as HTMLInputElement;
+    const form = document.getElementById("signin-form") as HTMLFormElement;
+
+    username.value = "seb";
+    password.value = "demo";
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await vi.waitFor(() => {
+      expect(layoutCenter.textContent).toContain("Signed in as seb.");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:5000/api/add_user",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ username: "seb", password: "demo" }),
+      })
+    );
+    expect(localStorage.getItem("currentUser")).toContain('"username":"seb"');
+    expect(layoutCenter.textContent).toContain('"users"');
+  });
 });

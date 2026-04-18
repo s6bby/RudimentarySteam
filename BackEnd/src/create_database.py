@@ -1,6 +1,8 @@
 import mysql.connector
+from pathlib import Path
 
 DATABASE_NAME = "Rudimentary_Steam_DB"
+BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 def main():
     print("Hit Enter to use default values for MySQL connection parameters.")
@@ -44,7 +46,7 @@ def create_database(host, port, user, password):
 
         cursor.execute(f"USE {DATABASE_NAME}")
         
-        execute_sql_file('./createTables.sql', mydb)
+        execute_sql_file(BACKEND_DIR / 'sql' / 'createTables.sql', mydb)
 
 
     except mysql.connector.Error as err:
