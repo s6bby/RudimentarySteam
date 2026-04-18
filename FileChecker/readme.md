@@ -47,6 +47,16 @@ Install the other dependencies:
 npm ci
 ```
 
+## Running the Script
+
+### Instructions:
+It's really simple, just locate the path to the item you want to send off to TotalVirus and plug it in as a command line argument.
+
+Like so:
+```bash
+node TotalVirusClient.js FILE_PATH
+```
+
 ## Troubleshooting
 
 ### "Missing local dependency" Error
