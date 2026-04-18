@@ -50,7 +50,7 @@ npm ci
 ## Running the Script
 
 ### Instructions:
-a. Locate the path to the item you want to send off to TotalVirus.
+a. Locate the path to the item you want to send off to VirusTotal.
 b. Plug it in as a command line argument.
 
 Like so:
