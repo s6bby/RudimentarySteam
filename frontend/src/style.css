@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 
 :root {
-  /* earthy dark palette (DEFAULT) */
+  /* dark theme */
   --bg1: #1b1a12;
   --bg2: #14130d;
   --bg3: #0c0b08;
@@ -22,7 +22,7 @@
   --danger: #c96b4b;   /* terracotta */
 }
 
-/* (NEW) light theme overrides using the same variables */
+/* light theme */
 body.theme-light {
   --bg1: #f6f6f2;
   --bg2: #eeeeea;
@@ -43,7 +43,6 @@ body.theme-light {
   --danger: #b04b2f;
 }
 
-/* optional explicit dark marker, not required but nice for readability */
 body.theme-dark { }
 
 body {
@@ -120,7 +119,6 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-/* (NEW) make header background respect theme */
 body.theme-light .header { background: var(--surface); }
 
 .brand-name {
@@ -169,7 +167,6 @@ body.theme-light .header { background: var(--surface); }
   border-color: var(--border2);
 }
 
-/* (NEW) small icon button for theme toggle */
 .icon-btn {
   width: 42px;
   height: 38px;
@@ -221,6 +218,60 @@ body.theme-light .header { background: var(--surface); }
   line-height: 1.45;
 }
 
+.signin-panel {
+  max-width: 520px;
+}
+
+.signin-form {
+  display: grid;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font: inherit;
+}
+
+.signin-submit {
+  width: fit-content;
+  border-radius: 8px;
+}
+
+.signin-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.signin-status {
+  margin: 14px 0 8px;
+  color: var(--muted);
+}
+
+.json-output {
+  min-height: 120px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
 .profile-page {
   display: grid;
   gap: 16px;
@@ -270,6 +321,33 @@ body.theme-light .header { background: var(--surface); }
   margin: 8px 0 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profile-meta span {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.profile-action-btn {
+  border-radius: 8px;
 }
 
 .profile-stats {
@@ -457,7 +535,6 @@ body.theme-light .header { background: var(--surface); }
   background: #13120c;
 }
 
-/* (NEW) make drawer header respect theme */
 body.theme-light .drawer-header { background: var(--surface); }
 
 .drawer-title { font-weight: 900; }
@@ -623,7 +700,6 @@ body.theme-light .drawer-header { background: var(--surface); }
   border-top-right-radius: 12px;
 }
 
-/* (NEW) theme support for mobile menu header */
 body.theme-light .mobile-menu-header { background: var(--surface); }
 
 .mobile-menu-title { font-weight: 900; }

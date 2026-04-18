@@ -1,13 +1,17 @@
+import os
+from pathlib import Path
+
 import mysql.connector
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 db_config = {
-    'database': 'rudimentary_steam_db',
+    'database': 'Rudimentary_Steam_DB',
     'host': 'localhost',
     'user': 'root',
-    'password': 'CHANGE_ME', # Replace with your actual MySQL password
+    'password': os.environ.get('RUDIMENTARY_STEAM_DB_PASSWORD', ''),
     'port': 3306
 }
 
@@ -18,7 +22,6 @@ GET_QUERY_MAP = {
     "user": "get_user_by_id"
 }
 
-# Map endpoints that require an id parameter
 GET_QUERIES_WITH_PARAMS = {
     "application",
     "user"
@@ -30,15 +33,23 @@ POST_QUERY_MAP = {
 }
 
 POST_FIELDS_MAP = {
-    "user": ["username", "email", "hashed_password"],
+    "user": [
+        "username",
+        "email",
+        "hashed_password",
+        "bio",
+        "avatar",
+        "friend_list",
+        "library"
+    ],
     "application": ["name", "release_date", "description", "path"]
 }
 
 def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
-        
-    query_file = f'../sql/{query_filename}.sql'
+
+    query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
     try:
         mydb = mysql.connector.connect(
             database=db_config['database'],
@@ -53,15 +64,17 @@ def execute_query(query_filename, params=None):
         with open(query_file, 'r') as f:
             query = f.read()
         cursor.execute(query, params or ())
-        
-        # Return lastrowid for INSERT operations, otherwise return results
+
         if cursor.lastrowid:
             mydb.commit()
             return {"id": cursor.lastrowid}
-        else:
+
+        if cursor.with_rows:
             results = cursor.fetchall()
-            # Convert tuples to lists for JSON serialization
             return [list(row) for row in results]
+
+        mydb.commit()
+        return []
 
     except FileNotFoundError:
         return {"error": f"Query file {query_file} not found."}
@@ -73,17 +86,23 @@ def execute_query(query_filename, params=None):
         if mydb is not None:
             mydb.close()
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
+
 @app.route('/api/<endpoint>', methods=['GET'])
 def handle_get_request(endpoint):
-    
+
     if endpoint not in GET_QUERY_MAP:
         return jsonify({"error": "Endpoint not found"}), 404
 
     sql_query = GET_QUERY_MAP[endpoint]
-    
-    # Handle optional query parameters (like ?id=5)
+
     item_id = request.args.get('id')
-    
+
     if endpoint in GET_QUERIES_WITH_PARAMS:
         if not item_id:
             return jsonify({"error": "ID parameter required"}), 400
@@ -95,20 +114,19 @@ def handle_get_request(endpoint):
 
 @app.route('/api/<endpoint>', methods=['POST'])
 def handle_post_request(endpoint):
-    
+
     if endpoint not in POST_QUERY_MAP:
         return jsonify({"error": "Endpoint not found"}), 404
 
     sql_query = POST_QUERY_MAP[endpoint]
     data = request.get_json()
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    # Extract only the expected fields in the correct order
     expected_fields = POST_FIELDS_MAP.get(endpoint, [])
     params = tuple(data.get(field) for field in expected_fields)
-    
+
     query_response = execute_query(sql_query, params)
 
     return jsonify(query_response)

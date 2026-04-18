@@ -15,15 +15,40 @@ type Profile = {
   name: string;
   title: string;
   bio: string;
+  status: string;
+  favoriteGame: string;
   dateJoined: string;
   level: number;
   totalHoursPlayed: number;
   comments: string[];
+  wishlist: string[];
+  recentActivity: string[];
   achievements: {
     title: string;
     description: string;
   }[];
 };
+
+type BackendUser = {
+  user_id: number;
+  username: string;
+  email: string;
+};
+
+type SignInResponse = {
+  user: BackendUser;
+  created: unknown;
+  users: unknown;
+};
+
+type SignInConsoleOutput = {
+  created_user_id: number;
+  created_user: BackendUser;
+  backend_response: unknown;
+  users: unknown;
+};
+
+const API_BASE_URL = "http://127.0.0.1:5000/api";
 
 const LISTINGS: Listing[] = [
   {
@@ -70,29 +95,41 @@ const LISTINGS: Listing[] = [
 ];
 
 const PLACEHOLDER_PROFILE: Profile = {
-  name: "Placeholder Name",
-  title: "Placeholder community member",
-  bio: "Front-end placeholder profile for a player who tests builds, leaves feedback, and keeps an eye on every new drop on the platform.",
+  name: "Student Player",
+  title: "Testing games and leaving notes",
+  bio: "This is where my bio will go. For now, this page is using fake profile data so the layout can be tested.",
+  status: "Working on profile features",
+  favoriteGame: "Bullet Hell",
   dateJoined: "March 12, 2024",
   level: 18,
   totalHoursPlayed: 412,
   comments: [
-    "Really clean launcher flow. Would love game-specific update notes next.",
-    "The latest build boots fast and the library view feels much better now.",
-    "Please keep the earthy theme. It gives the platform its own identity.",
+    "The launcher page is easier to use now.",
+    "I want to add update notes to each game later.",
+    "The profile page still needs real account data.",
+  ],
+  wishlist: [
+    "Doom Clone",
+    "Clicker Game",
+    "File Checker",
+  ],
+  recentActivity: [
+    "Played Bullet Hell",
+    "Added Doom Clone to wishlist",
+    "Left feedback on the launcher layout",
   ],
   achievements: [
     {
       title: "First Download",
-      description: "Installed the first title on the platform.",
+      description: "Downloaded the first game on the platform.",
     },
     {
       title: "Patch Watcher",
-      description: "Checked in on five release updates in a single week.",
+      description: "Checked a few update notes in one week.",
     },
     {
       title: "Community Voice",
-      description: "Posted enough feedback to shape an upcoming feature.",
+      description: "Left feedback for a future feature.",
     },
   ],
 };
@@ -112,13 +149,9 @@ function escapeHtml(s: string) {
     .replaceAll("'", "&#039;");
 }
 
-// -----------------------------
-// theme toggle (NEW)
-// -----------------------------
 type Theme = "dark" | "light";
 
 function applyTheme(theme: Theme) {
-  // default is dark (no class needed), but we keep it explicit for clarity
   document.body.classList.remove("theme-dark", "theme-light");
   document.body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
   localStorage.setItem("theme", theme);
@@ -126,11 +159,11 @@ function applyTheme(theme: Theme) {
   const btn = document.getElementById("theme-toggle") as HTMLButtonElement | null;
   if (btn) {
     if (theme === "dark") {
-      btn.textContent = "🌙";
+      btn.textContent = "Light";
       btn.setAttribute("aria-label", "Switch to light theme");
       btn.title = "Switch to light theme";
     } else {
-      btn.textContent = "☀️";
+      btn.textContent = "Dark";
       btn.setAttribute("aria-label", "Switch to dark theme");
       btn.title = "Switch to dark theme";
     }
@@ -149,7 +182,6 @@ function initTheme() {
   });
 }
 
-// main ui
 const grid = needEl<HTMLDivElement>("listing-grid");
 const drawer = needEl<HTMLElement>("drawer");
 const drawerContent = needEl<HTMLDivElement>("drawer-content");
@@ -162,18 +194,15 @@ const app = needEl<HTMLDivElement>("app");
 const search = needEl<HTMLInputElement>("search");
 const libraryBtn = needEl<HTMLButtonElement>("library-btn");
 
-// mobile menu
 const burgerBtn = needEl<HTMLButtonElement>("burger-btn");
 const mobileMenu = needEl<HTMLElement>("mobile-menu");
 const mobileMenuClose = needEl<HTMLButtonElement>("mobile-menu-close");
 const menuBackdrop = needEl<HTMLElement>("menu-backdrop");
 
-// content container
 const layoutCenter = document.querySelector(".layout-center") as HTMLElement;
 
 let selectedId: string | null = null;
 
-// drawer open/close
 function setDrawerOpen(open: boolean) {
   if (open) {
     drawer.classList.add("open");
@@ -218,7 +247,7 @@ function renderListings(items: Listing[]) {
 
     card.innerHTML = `
       <div class="card-title">${escapeHtml(l.title)}</div>
-      <div class="card-meta">${escapeHtml(l.author)} • v${escapeHtml(l.version)} • ${escapeHtml(
+      <div class="card-meta">${escapeHtml(l.author)} - v${escapeHtml(l.version)} - ${escapeHtml(
       l.platform
     )}</div>
     `;
@@ -254,7 +283,6 @@ function applySearch() {
   renderListings(filtered);
 }
 
-// loading screen
 function boot() {
   let progress = 0;
 
@@ -270,7 +298,6 @@ function boot() {
   }, 70);
 }
 
-// mobile menu open/close
 function setMobileMenuOpen(open: boolean) {
   if (open) {
     mobileMenu.classList.add("open");
@@ -289,7 +316,6 @@ function setMobileMenuOpen(open: boolean) {
   }
 }
 
-// simple page templates
 function renderPage(title: string, content: string) {
   setDrawerOpen(false);
 
@@ -323,6 +349,26 @@ function renderProfilePage(profile: Profile) {
     )
     .join("");
 
+  const wishlistHtml = profile.wishlist
+    .map(
+      (game) => `
+        <li class="profile-list-item">
+          <p class="profile-list-copy">${escapeHtml(game)}</p>
+        </li>
+      `
+    )
+    .join("");
+
+  const activityHtml = profile.recentActivity
+    .map(
+      (activity) => `
+        <li class="profile-list-item">
+          <p class="profile-list-copy">${escapeHtml(activity)}</p>
+        </li>
+      `
+    )
+    .join("");
+
   const achievementsHtml = profile.achievements
     .map(
       (achievement) => `
@@ -343,9 +389,19 @@ function renderProfilePage(profile: Profile) {
           <div class="profile-avatar" aria-hidden="true">${escapeHtml(initials)}</div>
 
           <div class="profile-hero-copy">
-            <div class="profile-kicker">Placeholder User</div>
+            <div class="profile-kicker">Demo Account</div>
             <h2 class="profile-name">${escapeHtml(profile.name)}</h2>
             <p class="profile-role">${escapeHtml(profile.title)}</p>
+
+            <div class="profile-meta">
+              <span>${escapeHtml(profile.status)}</span>
+              <span>Favorite game: ${escapeHtml(profile.favoriteGame)}</span>
+            </div>
+
+            <div class="profile-actions">
+              <button class="btn profile-action-btn" id="edit-bio-btn" type="button">Edit Bio</button>
+              <button class="btn profile-action-btn" id="edit-avatar-btn" type="button">Change Avatar</button>
+            </div>
           </div>
         </section>
 
@@ -381,7 +437,23 @@ function renderProfilePage(profile: Profile) {
           <article class="profile-card">
             <div class="profile-section-title">Date Joined</div>
             <div class="profile-detail-value">${escapeHtml(profile.dateJoined)}</div>
-            <p class="profile-detail-copy">Member since the early placeholder era of Rudimentary Steam.</p>
+            <p class="profile-detail-copy">This is fake data until accounts are connected.</p>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Favorite Game</div>
+            <div class="profile-detail-value">${escapeHtml(profile.favoriteGame)}</div>
+            <p class="profile-detail-copy">A simple field that could come from user settings later.</p>
+          </article>
+
+          <article class="profile-card">
+            <div class="profile-section-title">Wishlist</div>
+            <ul class="profile-list">${wishlistHtml}</ul>
+          </article>
+
+          <article class="profile-card profile-card-wide">
+            <div class="profile-section-title">Recent Activity</div>
+            <ul class="profile-list">${activityHtml}</ul>
           </article>
 
           <article class="profile-card">
@@ -397,6 +469,124 @@ function renderProfilePage(profile: Profile) {
       </div>
     </section>
   `;
+
+  const editBioBtn = document.getElementById("edit-bio-btn") as HTMLButtonElement | null;
+  const editAvatarBtn = document.getElementById("edit-avatar-btn") as HTMLButtonElement | null;
+
+  editBioBtn?.addEventListener("click", () => alert("Edit bio is not connected yet."));
+  editAvatarBtn?.addEventListener("click", () => alert("Avatar upload is not connected yet."));
+}
+
+async function postDemoUser(username: string, password: string): Promise<SignInResponse> {
+  const safeUsername = username
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, ".")
+    .replaceAll(/^\.+|\.+$/g, "");
+  const email = `${safeUsername || "user"}@rudimentary.local`;
+  const hashedPassword = password || "demo-password";
+
+  const response = await fetch(`${API_BASE_URL}/user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+      email,
+      hashed_password: hashedPassword,
+      bio: "",
+      avatar: "",
+      friend_list: "[]",
+      library: "[]",
+    }),
+  });
+
+  const created = await response.json();
+
+  if (!response.ok || created.error) {
+    throw new Error(created.error || "Sign in failed");
+  }
+
+  const usersResponse = await fetch(`${API_BASE_URL}/users`);
+  const users = await usersResponse.json();
+
+  return {
+    user: {
+      user_id: Number(created.id ?? 0),
+      username,
+      email,
+    },
+    created,
+    users,
+  };
+}
+
+function renderSignInPage() {
+  setDrawerOpen(false);
+
+  layoutCenter.innerHTML = `
+    <section class="panel center-panel signin-panel">
+      <div class="panel-title">Sign in</div>
+      <div class="page-body">
+        <form id="signin-form" class="signin-form">
+          <label class="form-row">
+            <span>Username</span>
+            <input id="signin-username" class="form-input" name="username" autocomplete="username" required />
+          </label>
+
+          <label class="form-row">
+            <span>Password</span>
+            <input id="signin-password" class="form-input" name="password" type="password" autocomplete="current-password" />
+          </label>
+
+          <button id="signin-submit" class="btn signin-submit" type="submit">Sign in</button>
+        </form>
+
+        <p id="signin-status" class="signin-status">This sends user JSON to the backend.</p>
+        <pre id="signin-json" class="json-output">{}</pre>
+      </div>
+    </section>
+  `;
+
+  const form = needEl<HTMLFormElement>("signin-form");
+  const usernameInput = needEl<HTMLInputElement>("signin-username");
+  const passwordInput = needEl<HTMLInputElement>("signin-password");
+  const submitBtn = needEl<HTMLButtonElement>("signin-submit");
+  const status = needEl<HTMLParagraphElement>("signin-status");
+  const jsonOutput = needEl<HTMLPreElement>("signin-json");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username) {
+      status.textContent = "Add a username first.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    status.textContent = "Sending...";
+
+    try {
+      const data = await postDemoUser(username, password);
+      const consoleOutput: SignInConsoleOutput = {
+        created_user_id: data.user.user_id,
+        created_user: data.user,
+        backend_response: data.created,
+        users: data.users,
+      };
+
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      status.textContent = `Signed in as ${data.user.username}. User id: ${data.user.user_id}.`;
+      jsonOutput.textContent = JSON.stringify(consoleOutput, null, 2);
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : "Sign in failed.";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 }
 
 function handleNavAction(action: string) {
@@ -431,6 +621,10 @@ function handleNavAction(action: string) {
       renderProfilePage(PLACEHOLDER_PROFILE);
       break;
 
+    case "signin":
+      renderSignInPage();
+      break;
+
     case "settings":
       renderPage(
         "Settings & Privacy",
@@ -452,15 +646,14 @@ function handleNavAction(action: string) {
       break;
 
     case "signout":
-      alert("Signed out (placeholder)");
+      localStorage.removeItem("currentUser");
+      renderSignInPage();
       break;
   }
 }
 
-// drawer close
 drawerClose.addEventListener("click", () => setDrawerOpen(false));
 
-// click outside closes drawer (not menu)
 document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
 
@@ -473,7 +666,6 @@ document.addEventListener("click", (e) => {
   if (!clickedCard && !clickedDrawer) setDrawerOpen(false);
 });
 
-// esc closes stuff
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     setDrawerOpen(false);
@@ -481,13 +673,10 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// search
 search.addEventListener("input", applySearch);
 
-// header library button
 libraryBtn.addEventListener("click", () => handleNavAction("library"));
 
-// burger open/close
 burgerBtn.addEventListener("click", () => {
   const isOpen = mobileMenu.classList.contains("open");
   setMobileMenuOpen(!isOpen);
@@ -496,7 +685,6 @@ burgerBtn.addEventListener("click", () => {
 mobileMenuClose.addEventListener("click", () => setMobileMenuOpen(false));
 menuBackdrop.addEventListener("click", () => setMobileMenuOpen(false));
 
-// nav clicks (desktop + mobile)
 document.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
   el.addEventListener("click", (ev) => {
     ev.preventDefault();
@@ -505,13 +693,11 @@ document.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
   });
 });
 
-// resize cleanup
 window.addEventListener("resize", () => {
   if (window.innerWidth > 768) setMobileMenuOpen(false);
 });
 
-// startup
-initTheme(); // (NEW) set theme before showing UI
+initTheme();
 boot();
 applySearch();
 
@@ -529,6 +715,8 @@ export {
   setMobileMenuOpen,
   renderPage,
   renderProfilePage,
+  renderSignInPage,
+  postDemoUser,
   handleNavAction,
 };
 
