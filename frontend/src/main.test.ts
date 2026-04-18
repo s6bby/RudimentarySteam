@@ -140,23 +140,16 @@ describe("testing suite for rudimentary steam", () => {
   });
 
   it("submits the sign in page to the backend user endpoint", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        user: {
-          user_id: 1,
-          username: "seb",
-          email: "seb@rudimentary.local",
-        },
-        users: [
-          {
-            user_id: 1,
-            username: "seb",
-            email: "seb@rudimentary.local",
-          },
-        ],
-      }),
-    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [[1, "seb", "seb@rudimentary.local", "demo"]],
+      });
     vi.stubGlobal("fetch", fetchMock);
 
     const app = await import("./main");
@@ -177,12 +170,17 @@ describe("testing suite for rudimentary steam", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:5000/api/add_user",
+      "http://127.0.0.1:5000/api/user",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ username: "seb", password: "demo" }),
+        body: JSON.stringify({
+          username: "seb",
+          email: "seb@rudimentary.local",
+          hashed_password: "demo",
+        }),
       })
     );
+    expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:5000/api/users");
     expect(localStorage.getItem("currentUser")).toContain('"username":"seb"');
     expect(layoutCenter.textContent).toContain('"users"');
   });

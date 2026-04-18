@@ -10,7 +10,8 @@ const { setTimeout: sleep } = require('timers/promises');
 const path = require('path');
 
 const API_KEY = process.env.API_KEY;
-const FILE_PATH = '../../Database_System_Concepts.pdf';
+// using path.process ensures that the path works on Windows, Mac, or Linux.
+const FILE_PATH = process.argv[2] ? path.resolve(process.argv[2]) : null;
 
 virustotal.auth(API_KEY);
 
@@ -122,6 +123,11 @@ async function pollForResults(analysisId) {
 if (require.main === module) {
     (async () => {
         try {
+            if (!process.argv[2]) {
+                console.error("Usage: node VirusTotalClient.js <path_to_file>");
+                process.exit(1);
+            }
+
             // make sure API_KEY exists
             if (!API_KEY) throw new Error("API_KEY is missing from .env file");
 

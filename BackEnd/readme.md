@@ -18,7 +18,7 @@ source .venv/bin/activate
 ## Install Modules
 
 ```sh
-pip install mysql-connector flask
+pip install mysql-connector-python flask
 ```
 
 ## Create Database
@@ -44,6 +44,13 @@ From `BackEnd/src`, run:
 python server.py
 ```
 
+If your local MySQL root user has a password, set it before running the server:
+
+```sh
+export RUDIMENTARY_STEAM_DB_PASSWORD="your_password"
+python server.py
+```
+
 The server runs at `http://127.0.0.1:5000`.
 
 ## Current API Support
@@ -51,29 +58,33 @@ The server runs at `http://127.0.0.1:5000`.
 ### GET Requests
 
 - `/api/applications` returns a list of applications in the database.
+- `/api/application?id=12` returns an application by id.
 - `/api/users` returns a list of users in the database.
+- `/api/user?id=1` returns a user by id.
 
 ### POST Requests
 
-- `/api/add_user` adds a demo user.
+- `/api/user` adds a user.
 
 ```sh
-curl -X POST http://127.0.0.1:5000/api/add_user \
+curl -X POST http://localhost:5000/api/user \
   -H "Content-Type: application/json" \
-  -d '{"username":"seb","password":"demo"}'
+  -d '{"username":"UserThree","email":"userthree@example.com","hashed_password":"password"}'
 ```
 
-## Quick Check
+- `/api/application` adds an application.
 
 ```sh
-curl http://127.0.0.1:5000/api/applications
+curl -X POST http://localhost:5000/api/application \
+  -H "Content-Type: application/json" \
+  -d '{"name":"app1","release_date":"2026-04-16","description":"This is an app.","path":"This will not be in later commands"}'
 ```
 
-An empty database returns:
+## Feature Plans
 
-```json
-[]
-```
+- User login
+- User is able to download and leave reviews
+- Executable download
 
 ## Schema Diagram
 

@@ -36,8 +36,9 @@ type BackendUser = {
 };
 
 type SignInResponse = {
-  user: BackendUser | null;
-  users: BackendUser[];
+  user: BackendUser;
+  created: unknown;
+  users: unknown;
 };
 
 const API_BASE_URL = "http://127.0.0.1:5000/api";
@@ -470,21 +471,43 @@ function renderProfilePage(profile: Profile) {
 }
 
 async function postDemoUser(username: string, password: string): Promise<SignInResponse> {
-  const response = await fetch(`${API_BASE_URL}/add_user`, {
+  const safeUsername = username
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, ".")
+    .replaceAll(/^\.+|\.+$/g, "");
+  const email = `${safeUsername || "user"}@rudimentary.local`;
+  const hashedPassword = password || "demo-password";
+
+  const response = await fetch(`${API_BASE_URL}/user`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({
+      username,
+      email,
+      hashed_password: hashedPassword,
+    }),
   });
 
-  const data = await response.json();
+  const created = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.error || "Sign in failed");
+  if (!response.ok || created.error) {
+    throw new Error(created.error || "Sign in failed");
   }
 
-  return data as SignInResponse;
+  const usersResponse = await fetch(`${API_BASE_URL}/users`);
+  const users = await usersResponse.json();
+
+  return {
+    user: {
+      user_id: Number(created.id ?? 0),
+      username,
+      email,
+    },
+    created,
+    users,
+  };
 }
 
 function renderSignInPage() {
@@ -508,7 +531,7 @@ function renderSignInPage() {
           <button id="signin-submit" class="btn signin-submit" type="submit">Sign in</button>
         </form>
 
-        <p id="signin-status" class="signin-status">This adds a demo user through the backend.</p>
+        <p id="signin-status" class="signin-status">This sends user JSON to the backend.</p>
         <pre id="signin-json" class="json-output">{}</pre>
       </div>
     </section>
@@ -537,12 +560,8 @@ function renderSignInPage() {
 
     try {
       const data = await postDemoUser(username, password);
-      if (data.user) {
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
-        status.textContent = `Signed in as ${data.user.username}.`;
-      } else {
-        status.textContent = "Backend responded, but no user came back.";
-      }
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      status.textContent = `Signed in as ${data.user.username}.`;
       jsonOutput.textContent = JSON.stringify(data, null, 2);
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "Sign in failed.";

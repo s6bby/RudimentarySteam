@@ -47,6 +47,17 @@ Install the other dependencies:
 npm ci
 ```
 
+## Running the Script
+
+### Instructions:
+a. Locate the path to the item you want to send off to VirusTotal.
+b. Plug it in as a command line argument.
+
+Like so:
+```bash
+node TotalVirusClient.js FILE_PATH
+```
+
 ## Troubleshooting
 
 ### "Missing local dependency" Error

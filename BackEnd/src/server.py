@@ -1,7 +1,8 @@
-import mysql.connector
-from mysql.connector import errorcode
-from flask import Flask, jsonify, request
+import os
 from pathlib import Path
+
+import mysql.connector
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -10,55 +11,67 @@ db_config = {
     'database': 'Rudimentary_Steam_DB',
     'host': 'localhost',
     'user': 'root',
-    'password': ''
+    'password': os.environ.get('RUDIMENTARY_STEAM_DB_PASSWORD', ''),
+    'port': 3306
 }
 
 GET_QUERY_MAP = {
     "applications": "get_applications",
+    "application": "get_application_by_id",
     "users": "get_users",
+    "user": "get_user_by_id"
+}
+
+GET_QUERIES_WITH_PARAMS = {
+    "application",
+    "user"
 }
 
 POST_QUERY_MAP = {
-    "add_application": "add_application",
-    "add_user": "add_user",
+    "user": "add_user",
+    "application": "add_application"
 }
 
-def execute_query(query_filename, params=None, commit=False):
+POST_FIELDS_MAP = {
+    "user": ["username", "email", "hashed_password"],
+    "application": ["name", "release_date", "description", "path"]
+}
+
+def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
-        
+
     query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
     try:
         mydb = mysql.connector.connect(
+            database=db_config['database'],
             host=db_config['host'],
             user=db_config['user'],
             password=db_config['password'],
+            port=db_config['port']
         )
 
-        cursor = mydb.cursor(dictionary=True)
-
-        cursor.execute(f"USE {db_config['database']}")
+        cursor = mydb.cursor()
 
         with open(query_file, 'r') as f:
             query = f.read()
         cursor.execute(query, params or ())
-        if commit:
+
+        if cursor.lastrowid:
             mydb.commit()
-            return {
-                "affected_rows": cursor.rowcount,
-                "lastrowid": cursor.lastrowid,
-            }
+            return {"id": cursor.lastrowid}
 
         if cursor.with_rows:
-            return cursor.fetchall()
+            results = cursor.fetchall()
+            return [list(row) for row in results]
 
+        mydb.commit()
         return []
 
     except FileNotFoundError:
-        print(f"Query file {query_file} not found.")
+        return {"error": f"Query file {query_file} not found."}
     except mysql.connector.Error as err:
-        print(f"Error executing query: {err}")
-        raise
+        return {"error": f"Error executing query: {err}"}
     finally:
         if cursor is not None:
             cursor.close()
@@ -72,72 +85,43 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
-@app.route('/api/<endpoint>', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/api/<endpoint>', methods=['GET'])
 def handle_get_request(endpoint):
-    if request.method == 'OPTIONS':
-        return '', 204
 
-    if request.method == 'POST':
-        if endpoint not in POST_QUERY_MAP:
-            return jsonify({"error": "Endpoint not found"}), 404
-
-        if endpoint == "add_user":
-            return add_user()
-
-        return jsonify({"error": "Post endpoint is not wired yet"}), 501
-    
     if endpoint not in GET_QUERY_MAP:
         return jsonify({"error": "Endpoint not found"}), 404
 
     sql_query = GET_QUERY_MAP[endpoint]
-    
-    # Handle optional query parameters (like ?id=5)
+
     item_id = request.args.get('id')
-    
-    if "%s" in sql_query and item_id:
+
+    if endpoint in GET_QUERIES_WITH_PARAMS:
+        if not item_id:
+            return jsonify({"error": "ID parameter required"}), 400
         data = execute_query(sql_query, (item_id,))
     else:
         data = execute_query(sql_query)
 
     return jsonify(data)
 
-def add_user():
-    body = request.get_json(silent=True) or {}
-    username = str(body.get("username", "")).strip()
-    password = str(body.get("password", "")).strip()
+@app.route('/api/<endpoint>', methods=['POST'])
+def handle_post_request(endpoint):
 
-    if not username:
-        return jsonify({"error": "username is required"}), 400
+    if endpoint not in POST_QUERY_MAP:
+        return jsonify({"error": "Endpoint not found"}), 404
 
-    email = str(body.get("email", "")).strip()
-    if not email:
-        safe_username = "".join(
-            ch.lower() if ch.isalnum() else "."
-            for ch in username
-        ).strip(".") or "user"
-        email = f"{safe_username}@rudimentary.local"
+    sql_query = POST_QUERY_MAP[endpoint]
+    data = request.get_json()
 
-    hashed_password = password or "demo-password"
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
 
-    try:
-        result = execute_query(
-            POST_QUERY_MAP["add_user"],
-            (username, email, hashed_password),
-            commit=True,
-        )
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_DUP_ENTRY:
-            return jsonify({"error": "That username or email already exists"}), 409
-        return jsonify({"error": str(err)}), 500
+    expected_fields = POST_FIELDS_MAP.get(endpoint, [])
+    params = tuple(data.get(field) for field in expected_fields)
 
-    user_id = result["lastrowid"]
-    users = execute_query(GET_QUERY_MAP["users"])
-    created_user = execute_query("get_user_by_id", (user_id,))
+    query_response = execute_query(sql_query, params)
 
-    return jsonify({
-        "user": created_user[0] if created_user else None,
-        "users": users,
-    }), 201
+    return jsonify(query_response)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

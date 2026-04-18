@@ -3,7 +3,7 @@ import math
 
 import pygame
 from settings import settings, themes
-from entities import Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
+from entities import GlorpSpawner, Player, Enemy, Glob, GlobSpawner, EntityManager, Bullet, PlayerBullet
 
 
 
@@ -30,25 +30,40 @@ class Scene:
 class MainMenu(Scene):
     def __init__(self):
         super().__init__()
-
+        self.selectedOption = 0
+#add a selector for the menu options and use arrow keys to navigate
     def update(self, screen, events, dt):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    return PlayScene()
-                elif event.key == pygame.K_t:
-                    return ThemeShop()
-                elif event.key == pygame.K_s:
-                    return SettingsScene()
+                if event.key == pygame.K_UP:
+                    self.selectedOption = (self.selectedOption - 1) % 3
+                elif event.key == pygame.K_DOWN:
+                    self.selectedOption = (self.selectedOption + 1) % 3
+                elif event.key == pygame.K_RETURN:
+                    if self.selectedOption == 0:
+                        return PlayScene()
+                    elif self.selectedOption == 1:
+                        return ThemeShop()
+                    elif self.selectedOption == 2:
+                        return SettingsScene()
         return self
     def draw(self, screen):
         screen.fill("black")
         font = pygame.font.SysFont(None, 48)
-        text = font.render("Press Space to Start", True, "white")
+        if self.selectedOption == 0:
+            text = font.render("Start", True, "yellow")
+        else:
+            text = font.render("Start", True, "white")
         screen.blit(text, (200, 250))
-        text2 = font.render("Press T for Theme Shop", True, "white")
+        if self.selectedOption == 1:
+            text2 = font.render("Theme Shop", True, "yellow")
+        else:
+            text2 = font.render("Theme Shop", True, "white")
         screen.blit(text2, (150, 300))
-        text3 = font.render("Press S for Settings", True, "white")
+        if self.selectedOption == 2:
+            text3 = font.render("Settings", True, "yellow")
+        else:
+            text3 = font.render("Settings", True, "white")
         screen.blit(text3, (150, 350))
 
 class ThemeShop(Scene):
@@ -87,7 +102,9 @@ class PlayScene(Scene):
         self.player = Player(400,300)
         self.entityManager = EntityManager()
         self.globSpawner = GlobSpawner(self.entityManager)
+        self.glorpSpawner = GlorpSpawner(self.entityManager)
         self.entityManager.add(self.globSpawner)
+        self.entityManager.add(self.glorpSpawner)
         self.entityManager.add(self.player)
         self.enemies = []
         self.camera = Camera(settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT)

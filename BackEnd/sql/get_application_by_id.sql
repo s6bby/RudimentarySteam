@@ -1,0 +1,1 @@
+select * from applications where app_id = %s;

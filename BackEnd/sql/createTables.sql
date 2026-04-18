@@ -14,8 +14,8 @@ create table if not exists users (
 );
 
 create table if not exists reviews (
-    user_id int not null,
-    app_id int not null,
+    user_id int,
+    app_id int,
     rating int check (rating >= 1 and rating <= 10),
     comment text,
     review_date date,
