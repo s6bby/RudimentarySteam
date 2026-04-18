@@ -153,7 +153,7 @@ class Bullet(Enemy):
             self.velocity = pygame.Vector2(travelVector * self.speed)
     def update(self, targetposition, screen, dt, entityManager):
         self.position += self.velocity * dt
-        if self.position.x > screen.get_width() or self.position.x < 0 or self.position.y > screen.get_height() or self.position.y < 0:
+        if self.position.x > (screen.get_width() + 5000) or self.position.x < (-5000) or self.position.y > (screen.get_height() + 5000) or self.position.y < (-5000):
             entityManager.remove(self)    
     def draw(self, screen, camera):
         pygame.draw.circle(screen, self.color, camera.apply(self), 10)
