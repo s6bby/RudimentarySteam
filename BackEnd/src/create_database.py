@@ -48,7 +48,6 @@ def create_database(host, port, user, password):
         
         execute_sql_file(BACKEND_DIR / 'sql' / 'createTables.sql', mydb)
 
-
     except mysql.connector.Error as err:
         print(f"Error: {err}")
 
