@@ -129,7 +129,7 @@ def delete_profile_picture():
         os.remove(os.path.join(BACKEND_DIR, 'avatars', filename))
     return jsonify({"message": "Profile picture deleted successfully"})
 
-# GET /api/user/follows?userId=1236 -> get_user_friends
+# GET /api/user/follows?id=1236 -> get_user_friends
 @app.route('/api/user/follows', methods=['GET'])
 def get_user_friends():
     user_id = request.args.get('id')
@@ -183,3 +183,88 @@ def download_application():
     if not os.path.exists(os.path.join(BACKEND_DIR, 'apps', filename)):
         return jsonify({"error": "App not found."}), 404
     return send_from_directory(os.path.join(BACKEND_DIR, 'apps'), filename)
+
+# POST /api/application -> upload_application
+@app.route('/api/application', methods=['POST'])
+def upload_application():
+    name = request.form.get('name')
+    release_date = request.form.get('release_date')
+    description = request.form.get('description')
+    zip_file = request.files.get('app_zip')
+
+    if not zip_file:
+        return jsonify({"error": "Missing zip file"}), 400
+
+    if not all([name, release_date, description]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    data = execute_query('add_application', (name, release_date, description))
+    
+    if "error" in data:
+        return jsonify(data), 500
+
+    if isinstance(data, dict):
+        app_id = data.get('id')
+        
+        if not app_id:
+            return jsonify({"error": "Failed to retrieve application ID"}), 500
+
+        filename = f"app_{app_id}.zip"
+        apps_dir = os.path.join(BACKEND_DIR, 'apps')
+        
+        os.makedirs(apps_dir, exist_ok=True)
+        
+        full_save_path = os.path.join(apps_dir, filename)
+        
+        try:
+            zip_file.save(full_save_path)
+        except Exception as e:
+            return jsonify({"error": f"Failed to save file: {str(e)}"}), 500
+
+        return jsonify({
+            "message": "App uploaded successfully",
+            "app_id": app_id,
+            "path": full_save_path
+        }), 201
+
+    return jsonify({"error": "Unexpected data format from database"}), 500
+
+### ----- REVIEWS ----- ###
+# POST /api/review -> create a review
+@app.route('/api/review', methods=['POST'])
+def add_review():
+    review_data = request.get_json()
+    required_fields = ['user_id', 'app_id', 'rating', 'comment', 'review_date']
+    if not all(field in review_data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    params = (
+        review_data['user_id'],
+        review_data['appp_id'],
+        review_data['rating'],
+        review_data['comment'],
+        review_data['review_date']
+    )
+    
+    result = execute_query('add_review', params)
+    if "error" in result:
+        return jsonify(result), 500
+    return jsonify(result), 201
+
+# GET /api/review/app?id=123 -> get reviews by appId
+@app.route('/api/review/app', methods=['GET'])
+def get_review_by_appid():
+    app_id = request.args.get('id')
+    if not app_id:
+        return jsonify({"error": "ID parameter required"}), 400
+    data = execute_query('get_reviews_by_appid', (app_id,))
+    return jsonify(data)
+
+# GET /api/review/user?id=123 -> get reviews by appId
+@app.route('/api/review/user', methods=['GET'])
+def get_review_by_userid():
+    user_id = request.args.get('id')
+    if not user_id:
+        return jsonify({"error": "ID parameter required"}), 400
+    data = execute_query('get_reviews_by_appid', (user_id,))
+    return jsonify(data)
