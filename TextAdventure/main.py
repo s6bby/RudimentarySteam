@@ -48,11 +48,110 @@ class MenuScene(Scene):
 
     def handle_event(self, event):
         if self.play_button.clicked(event):
-            self.game.change_scene(StatSelectScene(self.game))
+            self.game.change_scene(CustomizationScene(self.game))
 
     def draw(self, screen):
         screen.fill(colors["black"])
         self.play_button.draw(screen)
+
+class CustomizationScene(Scene):
+    def __init__(self, game):
+        super().__init__(game)
+        self.font = pygame.font.Font(None, 36)
+
+        self.parts = {
+            "Head": [255, 200, 200],
+            "Torso": [200, 255, 200],
+            "Legs": [200, 200, 255]
+        }
+
+        self.selected_part = "Head"
+
+        self.sliders = {
+            "R": 0,
+            "G": 0,
+            "B": 0
+        }
+
+        self.update_sliders()
+
+        self.continue_button = Button((350, 600, 300, 60), "Continue", self.font)
+
+    def update_sliders(self):
+        color = self.parts[self.selected_part]
+        self.sliders["R"], self.sliders["G"], self.sliders["B"] = color
+
+    def apply_sliders(self):
+        self.parts[self.selected_part] = [
+            self.sliders["R"],
+            self.sliders["G"],
+            self.sliders["B"]
+        ]
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = event.pos
+
+            if pygame.Rect(450, 150, 100, 100).collidepoint(x, y):
+                self.selected_part = "Head"
+                self.update_sliders()
+
+            elif pygame.Rect(440, 260, 120, 140).collidepoint(x, y):
+                self.selected_part = "Torso"
+                self.update_sliders()
+
+            elif pygame.Rect(450, 410, 100, 120).collidepoint(x, y):
+                self.selected_part = "Legs"
+                self.update_sliders()
+
+        if pygame.mouse.get_pressed()[0]:
+            mx, my = pygame.mouse.get_pos()
+            slider_x = 50
+
+            for i, key in enumerate(["R", "G", "B"]):
+                y = 200 + i * 80
+                slider_rect = pygame.Rect(slider_x, y, 300, 20)
+
+                if slider_rect.collidepoint(mx, my):
+                    relative_x = mx - slider_x
+                    relative_x = max(0, min(300, relative_x))
+                    value = int((relative_x / 300) * 255)
+                    self.sliders[key] = value
+                    self.apply_sliders()
+
+        if self.continue_button.clicked(event):
+            self.game.player_appearance = self.parts
+            self.game.change_scene(StatSelectScene(self.game))
+
+    def draw_character(self, screen):
+        pygame.draw.rect(screen, self.parts["Head"], (450, 150, 100, 100))
+        pygame.draw.rect(screen, self.parts["Torso"], (440, 260, 120, 140))
+        pygame.draw.rect(screen, self.parts["Legs"], (450, 410, 100, 120))
+
+    def draw_sliders(self, screen):
+        slider_x = 50
+
+        for i, key in enumerate(["R", "G", "B"]):
+            y = 200 + i * 80
+
+            label = self.font.render(f"{key}: {self.sliders[key]}", True, colors["white"])
+            screen.blit(label, (slider_x, y - 30))
+
+            pygame.draw.rect(screen, colors["gray"], (slider_x, y, 300, 20))
+
+            x_pos = slider_x + (self.sliders[key] / 255) * 300
+            pygame.draw.rect(screen, colors["white"], (int(x_pos) - 5, y - 5, 10, 30))
+
+    def draw(self, screen):
+        screen.fill(colors["black"])
+
+        title = self.font.render(f"Editing: {self.selected_part}", True, colors["white"])
+        screen.blit(title, (350, 50))
+
+        self.draw_character(screen)
+        self.draw_sliders(screen)
+
+        self.continue_button.draw(screen)
 
 class StatSelectScene(Scene):
     def __init__(self, game):
@@ -66,18 +165,35 @@ class StatSelectScene(Scene):
             "Charisma": 1
         }
 
-        self.buttons = []
+        self.points_left = 3
+
+        self.add_buttons = []
+        self.sub_buttons = []
+
         y = 200
         for stat in self.stats:
-            self.buttons.append((stat, Button((w//2 - 150, y, 300, 50), f"+ {stat}", self.font)))
+            self.add_buttons.append(
+                (stat, Button((w//2 - 160, y, 140, 50), f"+ {stat}", self.font))
+            )
+            self.sub_buttons.append(
+                (stat, Button((w//2 + 20, y, 140, 50), f"- {stat}", self.font))
+            )
             y += 70
 
         self.start_button = Button((w//2 - 150, y + 50, 300, 60), "Continue", self.font)
 
     def handle_event(self, event):
-        for stat, button in self.buttons:
+        for stat, button in self.add_buttons:
             if button.clicked(event):
-                self.stats[stat] += 1
+                if self.points_left > 0:
+                    self.stats[stat] += 1
+                    self.points_left -= 1
+
+        for stat, button in self.sub_buttons:
+            if button.clicked(event):
+                if self.stats[stat] > 1:
+                    self.stats[stat] -= 1
+                    self.points_left += 1
 
         if self.start_button.clicked(event):
             self.game.player_stats = self.stats
@@ -86,13 +202,19 @@ class StatSelectScene(Scene):
     def draw(self, screen):
         screen.fill(colors["black"])
 
+        points_text = self.font.render(f"Points Left: {self.points_left}", True, colors["white"])
+        screen.blit(points_text, (50, 50))
+
         y = 100
         for stat, value in self.stats.items():
             text = self.font.render(f"{stat}: {value}", True, colors["white"])
             screen.blit(text, (50, y))
             y += 40
 
-        for _, button in self.buttons:
+        for _, button in self.add_buttons:
+            button.draw(screen)
+
+        for _, button in self.sub_buttons:
             button.draw(screen)
 
         self.start_button.draw(screen)
@@ -179,7 +301,7 @@ class CombatScene(Scene):
         self.enemy_hp = 25
         self.enemy_name = "Stranger"
 
-        self.message = "The stranger turns hostile!"
+        self.message = "The stranger is not backing down!"
         self.reduced_damage = False
 
         self.buttons = []
@@ -215,7 +337,6 @@ class CombatScene(Scene):
 
     def enemy_turn(self):
         base_damage = 5
-
 
         endurance = self.player_stats.get("Endurance", 1)
         damage = max(1, base_damage - endurance)
@@ -276,6 +397,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.player_appearance = {}
         self.player_stats = {}
         self.current_scene = MenuScene(self)
 
