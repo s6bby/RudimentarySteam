@@ -14,9 +14,6 @@ db_config = {
     'port': 3306
 }
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-
 def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
@@ -63,8 +60,8 @@ def execute_query(query_filename, params=None):
 
 # GET /api/users -> get_all_users
 @app.route('/api/users', methods=['GET'])
-def get_all_users():
-    data = execute_query('get_all_users')
+def get_users():
+    data = execute_query('get_users')
     return jsonify(data)
 
 # GET /api/user?id=123 -> get_user_by_id
@@ -129,9 +126,9 @@ def delete_profile_picture():
         os.remove(os.path.join(BACKEND_DIR, 'avatars', filename))
     return jsonify({"message": "Profile picture deleted successfully"})
 
-# GET /api/user/follows?id=1236 -> get_user_friends
+# GET /api/user/follows?id=1236 -> get_user_follows
 @app.route('/api/user/follows', methods=['GET'])
-def get_user_friends():
+def get_user_follows():
     user_id = request.args.get('id')
     if not user_id:
         return jsonify({"error": "ID parameter required"}), 400
@@ -268,3 +265,6 @@ def get_review_by_userid():
         return jsonify({"error": "ID parameter required"}), 400
     data = execute_query('get_reviews_by_appid', (user_id,))
     return jsonify(data)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
