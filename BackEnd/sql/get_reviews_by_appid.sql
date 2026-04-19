@@ -1,0 +1,1 @@
+select * from reviews where app_id = %s;

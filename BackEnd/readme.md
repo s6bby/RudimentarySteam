@@ -58,27 +58,31 @@ The server runs at `http://127.0.0.1:5000`.
 ### GET Requests
 
 - `/api/applications` returns a list of applications in the database.
-- `/api/application?id=12` returns an application by id.
+- `/api/data/application?id=12` returns an application by id.
+- `/api/application?id=12` returns a zip of the app with id.
 - `/api/users` returns a list of users in the database.
 - `/api/user?id=1` returns a user by id.
+- `/api/user/avatar?id=1` sends the profile picture saved for the user
+- `/api/user/follows?id=1` returns a list of the users id follows
+- `/api/review/app?id=1` gets all reviews of app
+- `/api/review/user?id=1` gets all reviews left by user
 
 ### POST Requests
 
 - `/api/user` adds a user.
+- `/api/user/follow` follows a user
+- `/api/review` adds a review
+- `/api/application` adds a new app
+  - Note: this is a multipart/form-data request that expects data and zip file
 
-```sh
-curl -X POST http://localhost:5000/api/user \
-  -H "Content-Type: application/json" \
-  -d '{"username":"UserThree","email":"userthree@example.com","hashed_password":"password","bio":"","avatar":"","friend_list":"[]","library":"[]"}'
-```
+### PUT Requests
 
-- `/api/application` adds an application.
+- `/api/user/avatar` updates profile picture associated with user
+  - Note: this is a multipart/form-data request that expects user_id and photo
 
-```sh
-curl -X POST http://localhost:5000/api/application \
-  -H "Content-Type: application/json" \
-  -d '{"name":"app1","release_date":"2026-04-16","description":"This is an app.","path":"This will not be in later commands"}'
-```
+### DELETE Requests
+
+- `/api/user/avatar?id=1` resets the user profile photo to default.
 
 ## Feature Plans
 

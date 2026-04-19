@@ -1,0 +1,1 @@
+select * from reviews where user_id = %s;

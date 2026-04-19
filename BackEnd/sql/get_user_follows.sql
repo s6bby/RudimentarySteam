@@ -1,0 +1,1 @@
+select * from following where user_id = %s;
