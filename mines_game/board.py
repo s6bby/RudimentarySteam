@@ -35,7 +35,13 @@ class Board:
         for row in self.cells:
             for cell in row:
                 if cell.rect.collidepoint(mousePos):
+                    if cell.isRevealed:
+                        return None
+
                     cell.reveal()
+                    return cell
+
+        return None
 
     def draw(self, screen):
         for row in self.cells:
