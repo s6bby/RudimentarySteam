@@ -187,7 +187,6 @@ class Camera:
         return entity.position - pygame.Vector2(self.camera.topleft)
     
     def apply_rect(self, rect):
-        # Returns a new Rect shifted by the camera offset
         return rect.move(-self.camera.x, -self.camera.y)
 
     def update(self, target):
