@@ -71,7 +71,7 @@ class Player(Entity):
             velocity.normalize_ip() 
             self.position += velocity * self.speed * dt
     def draw(self, screen, camera):
-        pygame.draw.circle(screen, self.color, camera.apply(self), 70)
+        pygame.draw.circle(screen, self.color, camera.apply(self), self.radius)
         font = pygame.font.SysFont(None, 36)
         healthText = font.render(f"Health: {self.health}", True, self.color)
         screen.blit(healthText, (10, 50))
