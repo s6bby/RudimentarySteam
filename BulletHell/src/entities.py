@@ -224,7 +224,6 @@ class EntityManager:
 class TileMap:
     def __init__(self, tileSize=256):
         self.tileSize = tileSize
-        # Simplified: 0 = empty, 1 = wall
         self.map_data = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 0, 0, 0, 1, 1, 1, 1, 1, 1],
