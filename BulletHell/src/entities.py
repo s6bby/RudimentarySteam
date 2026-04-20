@@ -234,11 +234,9 @@ class TileMap:
         ]
 
     def update(self, dt):
-        pass # Most tiles don't need updates
+        pass 
 
     def draw(self, screen, camera):
-        # Calculate which tiles are actually on screen (Culling)
-        # Only draw what the camera can see!
         for row_index, row in enumerate(self.map_data):
             for col_index, tile in enumerate(row):
                 if tile == 1:
