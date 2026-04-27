@@ -113,8 +113,9 @@ class Glob(Enemy):
             self.shootTimer = 0
             entityManager.add(self.shoot(targetposition))
     def draw(self, screen, camera):
-        pygame.draw.circle(screen, "red", camera.apply(self), self.radius)
-        pygame.draw.rect(screen, "green", (300, 180, self.health * 2, 20))
+        pos = camera.apply(self)
+        pygame.draw.circle(screen, "red", pos, self.radius)
+        pygame.draw.rect(screen, "green", (pos.x - self.health / 2, pos.y + self.radius + 10, self.health, 6))
     def path(self,targetposition, dt):
         length = targetposition - self.position
         if length.magnitude() != 0:
@@ -271,4 +272,3 @@ class TileMap:
                     ))
                     pygame.draw.rect(screen, (50, 50, 50), pos)
                     pygame.draw.rect(screen, (0, 0, 0), pos, 2)
-
