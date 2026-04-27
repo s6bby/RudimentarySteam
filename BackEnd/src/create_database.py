@@ -5,11 +5,14 @@ DATABASE_NAME = "Rudimentary_Steam_DB"
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 def main():
+    print("WARNING: This will delete the existing database and all its data. Make sure to back up any important data before proceeding.")
     print("Hit Enter to use default values for MySQL connection parameters.")
     host = input("Enter MySQL host (Default: localhost): ") or "localhost"
     port = input("Enter MySQL port (Default: 3306): ") or "3306"
     user = input("Enter MySQL username (Default: root): ") or "root"
     password = input("Enter MySQL password (Default: None): ") or ""
+    
+    delete_database(host, port, user, password)
 
     create_database(host, port, user, password)
 
@@ -28,6 +31,30 @@ def execute_sql_file(filename, connection):
 
     connection.commit()
     cursor.close()
+
+def delete_database(host, port, user, password):
+    mydb = None
+    cursor = None
+    try:
+        mydb = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            port=int(port)
+        )
+
+        cursor = mydb.cursor()
+
+        cursor.execute(f"DROP DATABASE IF EXISTS {DATABASE_NAME}")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if mydb is not None:
+            mydb.close()
 
 def create_database(host, port, user, password):
     mydb = None
