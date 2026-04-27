@@ -18,13 +18,13 @@ def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
     
-    query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
-    with open(query_file, 'r') as f:
+    try:
+        query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
+        with open(query_file, 'r') as f:
             query = f.read()
     
-    is_write_operation = query.strip().lower().startswith(('insert', 'update', 'delete'))
-    
-    try:
+        is_write_operation = query.strip().lower().startswith(('insert', 'update', 'delete'))
+
         mydb = mysql.connector.connect(
             database=db_config['database'],
             host=db_config['host'],
@@ -55,6 +55,13 @@ def execute_query(query_filename, params=None):
             cursor.close()
         if mydb is not None:
             mydb.close()
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
 
 ### ----- USERS ----- ###
 
@@ -135,8 +142,8 @@ def get_user_follows():
     data = execute_query('get_user_follows', (user_id,))
     return jsonify(data)
 
-# POST /api/user/follow
-@app.route('/api/user/follows', methods=['POST'])
+# POST /api/user/follow -> follow_user
+@app.route('/api/user/follow', methods=['POST'])
 def follow_user():
     user_data = request.get_json()
     required_fields = ['user_id', 'follow_id']
@@ -220,8 +227,7 @@ def upload_application():
 
         return jsonify({
             "message": "App uploaded successfully",
-            "app_id": app_id,
-            "path": full_save_path
+            "app_id": app_id
         }), 201
 
     return jsonify({"error": "Unexpected data format from database"}), 500
@@ -237,7 +243,7 @@ def add_review():
     
     params = (
         review_data['user_id'],
-        review_data['appp_id'],
+        review_data['app_id'],
         review_data['rating'],
         review_data['comment'],
         review_data['review_date']
@@ -257,13 +263,13 @@ def get_review_by_appid():
     data = execute_query('get_reviews_by_appid', (app_id,))
     return jsonify(data)
 
-# GET /api/review/user?id=123 -> get reviews by appId
+# GET /api/review/user?id=123 -> get reviews by userId
 @app.route('/api/review/user', methods=['GET'])
 def get_review_by_userid():
     user_id = request.args.get('id')
     if not user_id:
         return jsonify({"error": "ID parameter required"}), 400
-    data = execute_query('get_reviews_by_appid', (user_id,))
+    data = execute_query('get_reviews_by_userid', (user_id,))
     return jsonify(data)
 
 if __name__ == '__main__':

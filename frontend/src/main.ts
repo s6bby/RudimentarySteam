@@ -483,7 +483,7 @@ async function postDemoUser(username: string, password: string): Promise<SignInR
     .replaceAll(/[^a-z0-9]+/g, ".")
     .replaceAll(/^\.+|\.+$/g, "");
   const email = `${safeUsername || "user"}@rudimentary.local`;
-  const hashedPassword = password || "demo-password";
+  const demoPassword = password || "demo-password";
 
   const response = await fetch(`${API_BASE_URL}/user`, {
     method: "POST",
@@ -493,11 +493,8 @@ async function postDemoUser(username: string, password: string): Promise<SignInR
     body: JSON.stringify({
       username,
       email,
-      hashed_password: hashedPassword,
-      bio: "",
-      avatar: "",
-      friend_list: "[]",
-      library: "[]",
+      password: demoPassword,
+      bio: "Created from the frontend sign-in page.",
     }),
   });
 

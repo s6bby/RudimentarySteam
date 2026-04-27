@@ -34,7 +34,7 @@ class Game:
 
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))  #TODO: Window resizing needs to be accounted for in the way the game is drawn
+    screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))  
     clock = pygame.time.Clock()
     game = Game(screen)   
     game.run()
