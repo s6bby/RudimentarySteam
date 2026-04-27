@@ -1,1 +1,1 @@
-select * except (password) from users where user_id = %s;
+select user_id, username, email, bio from users where user_id = %s;
