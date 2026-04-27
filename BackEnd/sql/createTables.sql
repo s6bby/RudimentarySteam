@@ -21,7 +21,7 @@ create table if not exists following (
     foreign key (follow_id) references users(user_id) on delete cascade
 );
 
-create table if not exists library (
+create table if not exists `library` (
     user_id int,
     app_id int,
     primary key (user_id, app_id),
