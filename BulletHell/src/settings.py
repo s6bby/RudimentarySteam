@@ -30,5 +30,6 @@ class Settings:
         self.unlockedThemes = {"Default": True, "Dark": False, "Light": False}
         self.SCREEN_WIDTH = 1920
         self.SCREEN_HEIGHT = 1080
+        self.highScore = 0
         
 settings = Settings()

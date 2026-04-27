@@ -19,23 +19,26 @@ class Player(Entity):
         self.speed = 100
         self.health = 100
         self.bullets = []
+        self.score = 0
         self.shootTimer = 0
         self.healthTimer = 0
         self.settings = settings
+        self.dashBar = 100
         self.color = settings.theme["player"]
 
     def update(self, targetposition, screen, dt, entityManager):
         self.move(dt)
+        self.dashBar = min(100, self.dashBar + 20 * dt)
         self.checkCollisions(entityManager, screen, dt)
         self.shoot(screen, dt, entityManager)
 
     def checkCollisions(self, entityManager, screen, dt):
         self.healthTimer += dt
-        if self.position.x - self.radius < -5000:
+        if self.position.x - self.radius < 0:
             self.position.x = self.radius
         if self.position.x + self.radius > screen.get_width() + 5000:
             self.position.x = screen.get_width() - self.radius
-        if self.position.y - self.radius < -5000:
+        if self.position.y - self.radius < 0:
             self.position.y = self.radius
         if self.position.y + self.radius > screen.get_height() + 5000:
             self.position.y = screen.get_height() - self.radius
@@ -69,12 +72,22 @@ class Player(Entity):
         #Normalize the vector to account for diagonal speed increase
         if velocity.magnitude() != 0:    
             velocity.normalize_ip() 
+            if keysPressed[pygame.K_LSHIFT]:
+                if self.dashBar >= 10:
+                    self.dashBar -= 10
+                    velocity *= 10
             self.position += velocity * self.speed * dt
     def draw(self, screen, camera):
         pygame.draw.circle(screen, self.color, camera.apply(self), self.radius)
         font = pygame.font.SysFont(None, 36)
         healthText = font.render(f"Health: {self.health}", True, self.color)
         screen.blit(healthText, (10, 50))
+        #dashbar is white bar that shows how close to 100 it is, with white border around
+        pygame.draw.rect(screen, "white", (10, 90, 202, 24), 2)
+        pygame.draw.rect(screen, "white", (10, 90, self.dashBar * 2, 20))
+    def updateScore(self, points):
+        self.score += points
+        self.score = max(0, self.score)
         
 
 class Enemy(Entity):
@@ -89,17 +102,19 @@ class Glob(Enemy):
         self.shootTimer = 0
         self.radius = 50
         self.health = 30
+        self.range = 1000
     def update(self, targetposition, screen, dt, entityManager):
         self.path(targetposition, dt)
         self.checkCollisions(entityManager, screen, dt)
         self.shootTimer += dt
         if self.health <= 0:
             entityManager.remove(self)
-        if self.shootTimer >= 2:
+        if self.shootTimer >= 2 and self.position.distance_to(targetposition) <= self.range:
             self.shootTimer = 0
             entityManager.add(self.shoot(targetposition))
     def draw(self, screen, camera):
         pygame.draw.circle(screen, "red", camera.apply(self), self.radius)
+        pygame.draw.rect(screen, "green", (300, 180, self.health * 2, 20))
     def path(self,targetposition, dt):
         length = targetposition - self.position
         if length.magnitude() != 0:
@@ -110,11 +125,12 @@ class Glob(Enemy):
             if isinstance(bullet, PlayerBullet):
                 distance = self.position.distance_to(bullet.position)     
                 if distance < (self.radius + bullet.radius):
+                    entityManager.player.updateScore(10)
                     self.health -= 10
                     entityManager.remove(bullet)
     def shoot(self, targetposition):
         return Bullet(self.position, targetposition)
-    
+
 class Glorp(Enemy):
     def __init__(self, xpos, ypos):
         super().__init__(xpos, ypos)
@@ -138,6 +154,7 @@ class Glorp(Enemy):
             if isinstance(bullet, PlayerBullet):
                 distance = self.position.distance_to(bullet.position)     
                 if distance < (self.radius + bullet.radius):
+                    entityManager.player.updateScore(10)
                     self.health -= 10
                     entityManager.remove(bullet)
 
@@ -170,13 +187,19 @@ class PlayerBullet(Bullet):
 class GlobSpawner(Entity):
     def __init__(self, entityManager):
         self.spawnTimer = 0
+        self.spawnTime = 5
+        self.spawnLimit = 6
         self.entityManager = entityManager
     def update(self, targetposition, screen, dt, entityManager):
         self.spawnTimer += dt
-        if self.spawnTimer >= 5 and entityManager.getNumberOfEntities(Glob) < 6:
+        if self.spawnTimer >= self.spawnTime and entityManager.getNumberOfEntities(Glob) < self.spawnLimit:
             self.spawnTimer = 0
-            newGlob = Glob(random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
+            newGlob = Glob(random.randint(math.floor(entityManager.player.position.x - 850), math.ceil(entityManager.player.position.x + 850)), random.randint(math.floor(entityManager.player.position.y - 850), math.ceil(entityManager.player.position.y + 850)))
             self.entityManager.add(newGlob)
+        if entityManager.player.score % 200 == 0:
+            pass
+            
+            
             
 class GlorpSpawner(Entity):
     def __init__(self, entityManager):
@@ -186,7 +209,7 @@ class GlorpSpawner(Entity):
         self.spawnTimer += dt
         if self.spawnTimer >= 10 and entityManager.getNumberOfEntities(Glorp) < 3:
             self.spawnTimer = 0
-            newGlorp = Glorp(random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
+            newGlorp = Glorp(random.randint(math.floor(entityManager.player.position.x - 850), math.ceil(entityManager.player.position.x + 850)), random.randint(math.floor(entityManager.player.position.y - 850), math.ceil(entityManager.player.position.y + 850)))
             self.entityManager.add(newGlorp)
             
             
@@ -222,14 +245,15 @@ class EntityManager:
         return count
 
 class TileMap:
-    def __init__(self, tileSize=256):
+    def __init__(self, tileSize=512):
         self.tileSize = tileSize
         self.map_data = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ]
 
     def update(self, dt):
@@ -246,4 +270,5 @@ class TileMap:
                         self.tileSize, self.tileSize
                     ))
                     pygame.draw.rect(screen, (50, 50, 50), pos)
+                    pygame.draw.rect(screen, (0, 0, 0), pos, 2)
 

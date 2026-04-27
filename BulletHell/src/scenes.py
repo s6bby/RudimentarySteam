@@ -17,6 +17,13 @@ class FPSCounter:
         fps = int(clock.get_fps())
         text = self.font.render(f"FPS: {fps}", True, "white")
         screen.blit(text, (10, 10))
+        
+class scoreDisplay:
+    def __init__(self):
+        self.font = pygame.font.SysFont(None, 24)
+    def draw(self, screen, score):
+        text = self.font.render(f"Score: {score}", True, "white")
+        screen.blit(text, (10, 40))
     
 
 class Scene:
@@ -99,7 +106,7 @@ class ThemeShop(Scene):
 class PlayScene(Scene):
     def __init__(self):
         super().__init__()
-        self.player = Player(400,300)
+        self.player = Player(2500,1000)
         self.entityManager = EntityManager()
         self.globSpawner = GlobSpawner(self.entityManager)
         self.glorpSpawner = GlorpSpawner(self.entityManager)
@@ -108,6 +115,7 @@ class PlayScene(Scene):
         self.entityManager.add(self.player)
         self.enemies = []
         self.camera = Camera(settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT)
+        self.scoreDisplay = scoreDisplay()
     def update(self, screen, events, dt):
             self.entityManager.mouse_world_pos = pygame.mouse.get_pos() + pygame.Vector2(self.camera.camera.topleft)
             for event in events:
@@ -117,13 +125,29 @@ class PlayScene(Scene):
             self.entityManager.update(screen, dt)
             self.camera.update(self.player)
             if self.player.health <= 0:
-                return MainMenu()
+                settings.highScore = self.player.score
+                return GameOver()
             return self
         
     def draw(self, screen):
         screen.fill("black")
         self.entityManager.draw(screen, self.camera)
+        self.scoreDisplay.draw(screen, self.player.score)
         return self
+
+class GameOver(Scene):
+    def __init__(self):
+        super().__init__()
+    def update(self, screen, events, dt):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return MainMenu()
+        return self
+    def draw(self, screen):
+        font = pygame.font.SysFont(None, 48)
+        text = font.render("GAME OVER: Press enter for main menu", True, "red")
+        screen.blit(text, (50, 50))
 
 class SettingsScene(Scene):
     def __init__(self):
