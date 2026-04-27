@@ -6,6 +6,7 @@ from board import Board
 # all positions for gui were helped with ai
 # px : positions are x pos, y pos, width, height 
 
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -24,7 +25,7 @@ class Game:
         self.font = pygame.font.Font(None, 44)
         self.smallFont = pygame.font.Font(None, 28)
 
-        self.resetButton = pygame.Rect((self.width // 2) - 260, 20, 70, 50) 
+        self.resetButton = pygame.Rect((self.width // 2) - 270, 20, 90, 50)
         self.resetButtonColor = (255, 154, 56)
 
         self.startButton = pygame.Rect((self.width // 2) - 170, 20, 60, 50)
@@ -93,7 +94,7 @@ class Game:
         pygame.draw.rect(self.screen, self.resetButtonColor, self.resetButton, border_radius=8)
 
         resetText = self.smallFont.render("RESET", True, (255, 255, 255))
-        self.screen.blit(resetText, (self.resetButton.x + 7, self.resetButton.y + 16))
+        self.screen.blit(resetText, (self.resetButton.x + 12, self.resetButton.y + 15))
 
 
 
@@ -238,6 +239,8 @@ class Game:
                 if event.type == pygame.KEYDOWN and self.betActive:
                     if event.key == pygame.K_BACKSPACE:
                         self.betAmount = self.betAmount[:-1]
+
+                        
                     elif event.unicode.isdigit():
                         self.betAmount += event.unicode
 
