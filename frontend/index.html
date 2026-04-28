@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rudimentary Steam</title>
+    <title>SteamLite</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   </head>
 
   <body>
     <!-- loading screen -->
-    <div id="loading-screen" class="loading-screen" aria-live="polite">
+        <div id="loading-screen" class="loading-screen" aria-live="polite">
       <div class="loading-box">
-        <div class="loading-title">Rudimentary Steam</div>
+        <div class="loading-title">SteamLite</div>
         <div class="loading-subtitle">starting up…</div>
         <div class="loading-bar">
           <div id="loading-bar-fill" class="loading-bar-fill"></div>
@@ -26,7 +26,7 @@
     <div id="app" class="app">
       <header class="header">
         <div>
-          <div class="brand-name">Rudimentary Steam</div>
+          <div class="brand-name">SteamLite</div>
           <div class="brand-sub">A Home for Software to Live In</div>
         </div>
 
@@ -46,6 +46,8 @@
         </nav>
 
         <div class="header-actions">
+          <div id="session-indicator" class="session-indicator">Front-end demo build</div>
+
           <!-- mobile burger -->
           <button
             id="burger-btn"
@@ -97,11 +99,7 @@
       </aside>
 
       <main class="layout-center">
-        <section class="panel center-panel">
-          <div class="panel-title">Listings</div>
-          <div id="listing-grid" class="grid"></div>
-          <div class="tiny-note">click a listing to open details →</div>
-        </section>
+        <div id="content-root" class="content-root"></div>
 
         <!-- drawer -->
         <aside id="drawer" class="drawer" aria-hidden="true">
@@ -117,8 +115,10 @@
       </main>
 
       <footer class="footer">
-        Rudimentary Steam - work in progress
+        SteamLite - presentation build
       </footer>
+
+      <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
       <script type="module" src="/src/main.ts"></script>
     </div>
