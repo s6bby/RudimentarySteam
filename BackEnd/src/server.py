@@ -10,16 +10,16 @@ db_config = {
     'database': 'Rudimentary_Steam_DB',
     'host': 'localhost',
     'user': 'root',
-    'password': os.environ.get('RUDIMENTARY_STEAM_DB_PASSWORD', ''),
+    'password': os.environ.get('RUDIMENTARY_STEAM_DB_PASSWORD', '!Nzy1997'),
     'port': 3306
 }
 
 def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
+    query_file = BACKEND_DIR / 'src' / 'sql' / f'{query_filename}.sql'
     
     try:
-        query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
         with open(query_file, 'r') as f:
             query = f.read()
     
@@ -108,7 +108,7 @@ def update_profile_picture():
         return jsonify({"error": "ID parameter required"}), 400
     avatar = request.files['avatar']
     filename = 'avatar_' + str(user_id)
-    avatar.save(os.path.join(BACKEND_DIR, 'avatars', filename))
+    avatar.save(os.path.join(BACKEND_DIR, 'src', 'avatars', filename))
     return jsonify({"message": "Profile picture updated successfully"})
 
 # GET /api/user/avatar?id=123 -> get_profile_picture
@@ -118,9 +118,9 @@ def get_profile_picture():
     if not user_id:
         return jsonify({"error": "ID parameter required"}), 400
     filename = 'avatar_' + str(user_id)
-    if not os.path.exists(os.path.join(BACKEND_DIR, 'avatars', filename)):
-        return send_from_directory(os.path.join(BACKEND_DIR, 'avatars'), 'default_avatar.png')
-    return send_from_directory(os.path.join(BACKEND_DIR, 'avatars'), filename)
+    if not os.path.exists(os.path.join(BACKEND_DIR, 'src', 'avatars', filename)):
+        return send_from_directory(os.path.join(BACKEND_DIR, 'src', 'avatars'), 'default_avatar.png')
+    return send_from_directory(os.path.join(BACKEND_DIR, 'src', 'avatars'), filename)
 
 # DELETE /api/user/avatar?id=123 -> delete_profile_picture
 @app.route('/api/user/avatar', methods=['DELETE'])
@@ -129,8 +129,8 @@ def delete_profile_picture():
     if not user_id:
         return jsonify({"error": "ID parameter required"}), 400
     filename = 'avatar_' + str(user_id)
-    if os.path.exists(os.path.join(BACKEND_DIR, 'avatars', filename)):
-        os.remove(os.path.join(BACKEND_DIR, 'avatars', filename))
+    if os.path.exists(os.path.join(BACKEND_DIR, 'src', 'avatars', filename)):
+        os.remove(os.path.join(BACKEND_DIR, 'src', 'avatars', filename))
     return jsonify({"message": "Profile picture deleted successfully"})
 
 # GET /api/user/follows?id=1236 -> get_user_follows
@@ -184,9 +184,9 @@ def download_application():
     if not user_id:
         return jsonify({"error": "ID parameter required"}), 400
     filename = 'app_' + str(user_id)
-    if not os.path.exists(os.path.join(BACKEND_DIR, 'apps', filename)):
+    if not os.path.exists(os.path.join(BACKEND_DIR, 'src', 'apps', filename)):
         return jsonify({"error": "App not found."}), 404
-    return send_from_directory(os.path.join(BACKEND_DIR, 'apps'), filename)
+    return send_from_directory(os.path.join(BACKEND_DIR, 'src', 'apps'), filename)
 
 # POST /api/application -> upload_application
 @app.route('/api/application', methods=['POST'])
@@ -214,7 +214,7 @@ def upload_application():
             return jsonify({"error": "Failed to retrieve application ID"}), 500
 
         filename = f"app_{app_id}.zip"
-        apps_dir = os.path.join(BACKEND_DIR, 'apps')
+        apps_dir = os.path.join(BACKEND_DIR, 'src', 'apps')
         
         os.makedirs(apps_dir, exist_ok=True)
         
