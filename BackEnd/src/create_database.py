@@ -11,8 +11,10 @@ def main():
     port = input("Enter MySQL port (Default: 3306): ") or "3306"
     user = input("Enter MySQL username (Default: root): ") or "root"
     password = input("Enter MySQL password (Default: None): ") or ""
-    
-    #delete_database(host, port, user, password)
+    wipe_database = input("Do you want to wipe the existing database? (y/n): ").lower() == 'y'
+
+    if wipe_database:
+        delete_database(host, port, user, password)
 
     create_database(host, port, user, password)
 
