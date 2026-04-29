@@ -17,9 +17,9 @@ db_config = {
 def execute_query(query_filename, params=None):
     mydb = None
     cursor = None
+    query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
     
     try:
-        query_file = BACKEND_DIR / 'sql' / f'{query_filename}.sql'
         with open(query_file, 'r') as f:
             query = f.read()
     
